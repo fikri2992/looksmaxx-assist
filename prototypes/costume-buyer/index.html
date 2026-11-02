@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Costume Buyer</title>
+<style>
+  :root { --bg:#f4f1ea; --card:#fffdf8; --fg:#201c17; --muted:#6f675c; --line:#ddd5c6; --ok:#17684a; --warn:#a4620a; --bad:#a6332a; --ink:#27406b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#17150f; --card:#221f18; --fg:#eee8dc; --muted:#a59c8c; --line:#3a352a; --ok:#5fd0a2; --warn:#e6ad58; --bad:#ef8a80; --ink:#9db8e8; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui,sans-serif; }
+  main { max-width:1120px; margin:0 auto; padding:16px; }
+  h1 { font-size:22px; margin:0; }
+  h2 { font-size:15px; margin:0 0 8px; }
+  .muted { color:var(--muted); font-size:13px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; align-items:center; }
+  button { font:inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--fg); cursor:pointer; }
+  button.main { background:var(--ink); color:var(--card); border-color:var(--ink); font-weight:600; }
+  button:disabled { opacity:.5; cursor:wait; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px; }
+  .stat b { display:block; font-size:20px; }
+  .cols { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:12px; margin-top:12px; }
+  @media (max-width:800px) { .cols { grid-template-columns:minmax(0,1fr); } }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; }
+  .part { display:grid; grid-template-columns:56px minmax(0,1fr) auto; gap:10px; padding:10px 0; border-top:1px solid var(--line); align-items:start; }
+  .part:first-of-type { border-top:0; }
+  .part img, .thumb { width:56px; height:56px; object-fit:contain; background:#fff; border-radius:6px; border:1px solid var(--line); }
+  .tag { display:inline-block; font-size:12px; font-weight:600; padding:2px 8px; border-radius:99px; border:1px solid currentColor; white-space:nowrap; }
+  .s-buy,.s-bought,.s-owned { color:var(--ok); } .s-wait,.s-ask { color:var(--warn); } .s-no_match,.s-error { color:var(--bad); } .s-todo,.s-returned { color:var(--muted); }
+  .log { max-height:520px; overflow:auto; font-size:13px; }
+  .log div { padding:6px 0; border-top:1px solid var(--line); overflow-wrap:anywhere; }
+  .k-fake,.k-reject { color:var(--bad); } .k-buy,.k-refund,.k-mandate { color:var(--ok); } .k-clock,.k-weather { color:var(--warn); }
+  textarea { width:100%; font:inherit; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--fg); }
+  .row { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  #err { color:var(--bad); font-weight:600; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Costume Buyer</h1>
+  <div class="muted">Prototype. PayPal sandbox with simulated money. Prices come from real Channel3 listings, and purchases go through demo shops.</div>
+  <div class="bar">
+    <button class="main" data-act="plan">1. Plan parts</button>
+    <button class="main" data-act="source">2. Source and decide</button>
+    <button class="main" data-act="buy">3. Buy</button>
+    <button data-act="day" data-days="1">Next day</button>
+    <button data-act="day" data-days="7">+7 days</button>
+    <button data-act="reset">Reset</button>
+    <span id="busy" class="muted"></span><span id="err"></span>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="cols">
+    <div>
+      <div class="panel"><h2>Brief</h2><div id="brief" class="muted"></div></div>
+      <div class="panel"><h2>Parts</h2><div id="parts" class="muted">Nothing planned yet.</div></div>
+      <div class="panel"><h2>Bought, and return clock</h2><div id="buys" class="muted">Nothing bought yet.</div></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Crew kit (seeded memory)</h2><div id="kit"></div></div>
+      <div class="panel"><h2>Agent log</h2><div class="log" id="log"></div></div>
+    </div>
+  </div>
+</main>
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids.filter((k) => k != null)); return e; };
+const usd = (n) => '$' + Number(n).toFixed(2);
+const LABEL = { todo:'to do', owned:'already own', buy:'ready to buy', bought:'bought', wait:'waiting', ask:'needs you', no_match:'no match', error:'error', returned:'returned' };
+const daysBetween = (a, b) => Math.round((new Date(a + 'T00:00:00Z') - new Date(b + 'T00:00:00Z')) / 86400000);
+
+async function call(path, body) {
+  document.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+  $('busy').textContent = 'Agent working…';
+  $('err').textContent = '';
+  try {
+    const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) });
+    const data = await res.json();
+    if (data.approveUrl) { window.location.href = data.approveUrl; return; }
+    if (data.error) $('err').textContent = data.error;
+    render(data);
+  } catch (e) { $('err').textContent = e.message; }
+  finally { $('busy').textContent = ''; document.querySelectorAll('button').forEach((b) => { b.disabled = false; }); }
+}
+
+function stat(label, value, note) { return el('div', { className: 'stat' }, el('span', { className: 'muted', textContent: label }), el('b', { textContent: value }), note ? el('span', { className: 'muted', textContent: note }) : null); }
+
+function partRow(p) {
+  const info = el('div', {},
+    el('div', {}, el('strong', { textContent: p.part }), el('span', { className: 'muted', textContent: ` · ${p.group || ''} · qty ${p.qty || 1}` })),
+    p.pick ? el('div', { textContent: `${p.pick.title} · ${usd(p.pick.price)} · ${p.pick.store}` + (p.pick.was ? ` · "was ${usd(p.pick.was)}"` : '') }) : null,
+    p.why ? el('div', { className: 'muted', textContent: p.why }) : null,
+    p.check && p.check.fake ? el('div', { className: 'k-fake', textContent: 'Fake discount: ' + p.check.note }) : null,
+    p.target ? el('div', { className: 'muted', textContent: `Waiting for ${usd(p.target)} or the last safe day.` }) : null);
+  const right = el('div', {}, el('span', { className: `tag s-${p.status}`, textContent: LABEL[p.status] || p.status }));
+  if (p.status === 'ask') right.append(el('div', { className: 'row' }, el('button', { textContent: 'Approve', onclick: () => call('/api/approve', { id: p.id }) })));
+  const img = p.pick && p.pick.image ? el('img', { src: p.pick.image, alt: p.pick.title, loading: 'lazy' }) : el('div', { className: 'thumb' });
+  return el('div', { className: 'part' }, img, info, right);
+}
+
+function buyRow(b, day) {
+  const left = daysBetween(b.returnBy, day);
+  const clock = b.refundId ? `Refunded (${b.refundId})` : b.kept ? 'Kept' : left < 0 ? `Return window closed ${b.returnBy}` : `${left} days left to return, by ${b.returnBy}`;
+  const row = el('div', { className: 'part' }, el('div', { className: 'thumb' }),
+    el('div', {}, el('strong', { textContent: `${b.part} · ${usd(b.total)}` }), el('div', { className: 'muted', textContent: `${b.store} · capture ${b.captureId}` }), el('div', { className: left <= 3 && !b.refundId && !b.kept ? 'k-clock' : 'muted', textContent: clock })));
+  const actions = el('div', {});
+  if (!b.refundId && !b.kept && left >= 0) actions.append(el('div', { className: 'row' },
+    el('button', { textContent: 'Return', onclick: () => call('/api/refund', { id: b.id }) }),
+    el('button', { textContent: 'Keep', onclick: () => call('/api/keep', { id: b.id }) })));
+  row.append(actions);
+  return row;
+}
+
+function render(s) {
+  const p = s.project, w = s.weather;
+  $('brief').textContent = `${p.brief} Shoot ${p.shootDate}, ${p.place}. Rule: buy alone under $${p.mandate.askAbove} per part.`;
+  $('stats').replaceChildren(
+    stat('Today (simulated)', s.day, `${daysBetween(p.shootDate, s.day)} days to shoot`),
+    stat('Last safe order day', s.lastSafeDay, 'shipping + fitting, assumed'),
+    stat('Spent', usd(s.spent), `of $${p.budget} budget`),
+    stat('Shoot-day weather', w ? `${Math.round(w.feelsMax)}°C` : '–', w ? `rain ${w.rainChance}%, UV ${w.uvMax}` : 'plan first'),
+    stat('PayPal', s.hasPaypal ? 'Saved' : 'Not yet', s.hasPaypal ? 'agent can pay' : 'one approval needed'),
+    stat('Model cost', '$' + Number(s.modelCost).toFixed(3), 'this project'));
+  $('kit').replaceChildren(...s.kit.map((k) => el('div', { textContent: `${k.name} × ${k.qty} (${k.source})` })));
+  if (s.parts.length) $('parts').replaceChildren(...s.parts.map(partRow));
+  else $('parts').textContent = 'Nothing planned yet.';
+  if (s.purchases.length) $('buys').replaceChildren(...s.purchases.map((b) => buyRow(b, s.day)));
+  else $('buys').textContent = 'Nothing bought yet.';
+  $('log').replaceChildren(...s.log.slice(0, 80).map((l) => el('div', { className: `k-${l.kind}`, textContent: `${l.day} · ${l.text}` })));
+}
+
+document.querySelectorAll('[data-act]').forEach((b) => { b.onclick = () => call('/api/' + b.dataset.act, b.dataset.days ? { days: Number(b.dataset.days) } : {}); });
+fetch('/api/state').then((r) => r.json()).then(render);
+</script>
+</body>
+</html>
