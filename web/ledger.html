@@ -56,6 +56,11 @@
   <div class="muted">“Wait” turned into an action: each watch re-runs the tested rules when its price drops, and can buy through PayPal.</div>
   <div id="watches" class="grid" style="height:240px"></div>
 
+  <h2>What you own</h2>
+  <div class="muted">The context every decision starts from: how long each thing will last, when it's past its after-opening period, and how often clothes get worn.</div>
+  <div class="bar" data-for="inventory"></div>
+  <div id="inventory" class="grid" style="height:380px"></div>
+
   <h2>How the rules changed</h2>
   <div class="muted">A rule the agent writes goes live only after every old and new test passes.</div>
   <div id="rules" class="grid" style="height:260px"></div>
@@ -164,8 +169,25 @@ async function main() {
     rowHeight: 40, overlayNoRowsTemplate: '<span class="muted">No watches yet.</span>',
   });
 
+  const days = (n) => (n == null ? '' : n <= 0 ? 'now' : `${n} days`);
+  const inventoryApi = agGrid.createGrid(document.getElementById('inventory'), {
+    theme, rowData: [...state.items].sort((a, b) => Number(!!b.afterOpening?.past) - Number(!!a.afterOpening?.past) || (a.daysLeft ?? 1e9) - (b.daysLeft ?? 1e9)),
+    defaultColDef: { sortable: true, resizable: true, filter: true },
+    columnDefs: [
+      { headerName: 'Item', field: 'name', flex: 1.2, minWidth: 200, pinned: 'left' },
+      { headerName: 'Category', field: 'category', width: 120 },
+      { headerName: 'Type', field: 'type', width: 120 },
+      { headerName: 'Runs out in', field: 'daysLeft', width: 130, type: 'numericColumn', valueFormatter: (p) => days(p.value), cellStyle: (p) => ({ color: p.value != null && p.value <= 14 ? css('--wait') : css('--ink') }) },
+      { headerName: 'Use by', valueGetter: (p) => p.data.afterOpening?.useBy ?? '', width: 130 },
+      { headerName: 'After opening', valueGetter: (p) => (p.data.afterOpening ? (p.data.afterOpening.past ? 'past' : `${p.data.afterOpening.months} months`) : ''), width: 140, cellStyle: (p) => ({ color: p.value === 'past' ? css('--veto') : css('--ink') }) },
+      { headerName: 'Worn', valueGetter: (p) => (p.data.category === 'wardrobe' ? (p.data.wears ?? []).length : null), width: 95, type: 'numericColumn' },
+      { headerName: 'Source', field: 'source', width: 140 },
+    ],
+    rowHeight: 40,
+  });
+
   // Search and CSV export over each big grid (AG Grid quick filter and CSV export, both Community).
-  for (const [id, api, name] of [['decisions', decisionsApi, 'shelfie-decisions'], ['prices', pricesApi, 'shelfie-prices']]) {
+  for (const [id, api, name] of [['decisions', decisionsApi, 'shelfie-decisions'], ['prices', pricesApi, 'shelfie-prices'], ['inventory', inventoryApi, 'shelfie-inventory']]) {
     const bar = document.querySelector(`.bar[data-for="${id}"]`);
     bar.innerHTML = `<input type="search" placeholder="Search ${id}…" aria-label="Search ${id}"><button type="button">Export CSV</button>`;
     bar.querySelector('input').addEventListener('input', (e) => api.setGridOption('quickFilterText', e.target.value));
