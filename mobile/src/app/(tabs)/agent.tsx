@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Banner, Stamp, T } from '@/components/ui';
+import { Banner, plural, Stamp, T } from '@/components/ui';
 import { MaxContentWidth, Radius, Spacing, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { API_URL, mediaUrl, useStore, type ChatMessage } from '@/lib/api';
@@ -50,7 +50,7 @@ export default function AgentChat() {
       <View style={[styles.head, { paddingTop: insets.top + Spacing.two, borderColor: t.line }]}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: t.text }]}>Your agent</Text>
-          <T variant="small" tone="textSecondary">{`Knows ${state?.items.length ?? 0} things you own · ${state?.memories.length ?? 0} memories · rules v${state?.policy.version ?? 1}`}</T>
+          <T variant="small" tone="textSecondary">{`Knows ${plural(state?.items.length ?? 0, 'thing')} you own · ${plural(state?.memories.length ?? 0, 'memory', 'memories')} · rules v${state?.policy.version ?? 1}`}</T>
         </View>
         <Pressable onPress={() => router.push('/rules')} accessibilityRole="button" accessibilityLabel="Rules and memory" style={[styles.iconBtn, { borderColor: t.line }]}>
           <MaterialCommunityIcons name="brain" size={20} color={t.text} />

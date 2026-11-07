@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, Chip, Empty, Glyph, Screen, Section, T } from '@/components/ui';
+import { Button, Chip, Empty, Glyph, plural, Screen, Section, T } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { mediaUrl, useStore, type Item } from '@/lib/api';
@@ -78,7 +78,7 @@ function Piece({ item, picked, onPress, onLongPress }: { item: Item; picked: boo
   const { act } = useStore();
   const wears = item.wears?.length ?? 0;
   return (
-    <Pressable onPress={onPress} onLongPress={onLongPress} accessibilityRole="button" accessibilityLabel={`${item.name}, worn ${wears} times`} accessibilityState={{ selected: picked }}
+    <Pressable onPress={onPress} onLongPress={onLongPress} accessibilityRole="button" accessibilityLabel={`${item.name}, worn ${plural(wears, 'time')}`} accessibilityState={{ selected: picked }}
       style={[styles.piece, { backgroundColor: t.surface, borderColor: picked ? t.accent : t.line, borderWidth: picked ? 2 : StyleSheet.hairlineWidth }]}>
       {item.photoId ? <Image source={mediaUrl(item.photoId)} style={styles.photo} contentFit="cover" accessibilityIgnoresInvertColors />
         : <View style={[styles.photo, { backgroundColor: t.backgroundElement, alignItems: 'center', justifyContent: 'center' }]}><Glyph category="wardrobe" size={44} /></View>}

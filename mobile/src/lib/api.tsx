@@ -98,7 +98,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   useEffect(() => {
-    refresh();
+    // First load from the server; this is syncing with an external system, which is what effects are for.
+    refresh(); // eslint-disable-line react-hooks/set-state-in-effect
     fetch(`${API_URL}/api/weather`).then((r) => r.json()).then(setWeather).catch(() => {});
   }, [refresh]);
 

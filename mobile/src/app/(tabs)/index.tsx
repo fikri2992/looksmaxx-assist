@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, Card, Empty, Screen, Section, Sparkline, Stamp, T, type IconName } from '@/components/ui';
+import { Button, Card, Empty, plural, Screen, Section, Sparkline, Stamp, T, type IconName } from '@/components/ui';
 import { Radius, Spacing, Type, type Verdict } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { mediaUrl, useStore, type Decision } from '@/lib/api';
@@ -157,7 +157,7 @@ function DecisionCard({ d }: { d: Decision }) {
       {prices.length > 1 ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three }}>
           <Sparkline values={prices} now={d.product?.price} />
-          <T variant="small" tone="textSecondary" style={{ flex: 1 }}>{`${prices.length} days, $${lo}–$${hi}\n${d.history?.source}${d.history?.ourDays ? `, ${d.history.ourDays} days our own` : ''}`}</T>
+          <T variant="small" tone="textSecondary" style={{ flex: 1 }}>{`${plural(prices.length, 'day')}, $${lo}–$${hi}\n${d.history?.source}${d.history?.ourDays ? `, ${plural(d.history.ourDays, 'day')} our own` : ''}`}</T>
         </View>
       ) : null}
       {d.substitutedFor ? <T variant="small" tone="veto">{`Swapped in an alternative: the first match ${d.substitutedFor.reason}.`}</T> : null}
