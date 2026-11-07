@@ -59,7 +59,7 @@ export default function Rules() {
       </Section>
 
       <Section title="How its rules changed" hint="Each version only went live after its tests passed.">
-        {versions.map((v) => <VersionCard key={v.version} v={v} />)}
+        {versions.map((v) => <VersionCard key={v.version} v={v} rules={state?.policy.rules ?? []} />)}
       </Section>
 
       <Section title={`Current rules (v${state?.policy.version ?? 1})`}>
@@ -96,9 +96,14 @@ function Row({ icon, tone, text }: { icon: React.ComponentProps<typeof MaterialC
   return <View style={{ flexDirection: 'row', gap: Spacing.two }}><MaterialCommunityIcons name={icon} size={18} color={t[tone]} /><T variant="small" style={{ flex: 1 }}>{text}</T></View>;
 }
 
-function VersionCard({ v }: { v: PolicyVersion }) {
+function VersionCard({ v, rules }: { v: PolicyVersion; rules: Rule[] }) {
+  const t = useTheme();
+  const [open, setOpen] = useState(false);
   const passed = v.testResults?.filter((r) => r.pass).length;
   const failed = v.testResults?.filter((r) => !r.pass) ?? [];
+  // What the agent actually wrote: the rule as data (never code that runs) and the tests it had to pass.
+  const written = (v.diff?.added ?? []).map((id) => rules.find((r) => r.id === id)).filter((r): r is Rule => !!r);
+  const canOpen = v.createdBy === 'agent' && (written.length > 0 || !!v.testResults?.length);
   return (
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
@@ -110,6 +115,17 @@ function VersionCard({ v }: { v: PolicyVersion }) {
       {v.testResults ? <T variant="small" tone="textSecondary">{`${passed}/${v.testResults.length} tests passed`}</T> : <T variant="small" tone="textSecondary">{`${v.testCount} tests`}</T>}
       {failed.map((f) => <T key={f.name} variant="small" tone="veto">{`✗ ${f.name}: expected ${f.expect}, got ${f.got}`}</T>)}
       {v.errors?.map((e) => <T key={e} variant="small" tone="veto">{`✗ ${e}`}</T>)}
+      {canOpen ? <Button kind="quiet" icon={open ? 'chevron-up' : 'code-json'} label={open ? 'Hide what it wrote' : 'See what it wrote'} onPress={() => setOpen(!open)} /> : null}
+      {open ? (
+        <View style={{ gap: Spacing.two }}>
+          {written.map((r) => (
+            <View key={r.id} style={[styles.code, { backgroundColor: t.backgroundElement }]} accessibilityLabel={`Rule ${r.id} as written by the agent`}>
+              <T variant="mono" style={{ fontSize: 12.5 }}>{JSON.stringify({ id: r.id, when: r.when, then: r.then, because: r.because }, null, 2)}</T>
+            </View>
+          ))}
+          {v.testResults?.map((x) => <T key={x.name} variant="small" tone={x.pass ? 'buy' : 'veto'}>{`${x.pass ? '✓' : '✗'} ${x.name}: expects ${x.expect}${x.pass ? '' : `, got ${x.got}`}`}</T>)}
+        </View>
+      ) : null}
     </Card>
   );
 }
@@ -133,4 +149,5 @@ function RuleRow({ r }: { r: Rule }) {
 
 const styles = StyleSheet.create({
   input: { minHeight: 80, borderWidth: 1, borderRadius: Radius.md, padding: 12, fontFamily: Type.body, fontSize: 16, textAlignVertical: 'top' },
+  code: { borderRadius: Radius.md, padding: 12 },
 });
