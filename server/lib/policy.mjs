@@ -7,6 +7,7 @@ export const FACTS = {
   'product.price': 'number', 'product.wasPrice': 'number', 'product.inStock': 'boolean',
   'price.days': 'number', 'price.low': 'number', 'price.high': 'number', 'price.vsLow': 'number', // vsLow: price / recent low
   'need.ownedCovering': 'boolean', 'need.daysLeft': 'number',
+  'need.alreadyListed': 'boolean', // another open decision in the last week is for the same kind of thing
   'user.avoidHit': 'text', // the avoid-list word found in the product, or ''
   'budget.monthLeft': 'number', 'rules.askAbove': 'number',
   'weather.uvMax': 'number', 'weather.humidity': 'number',
@@ -95,13 +96,14 @@ export function diffPolicies(a, b) {
   };
 }
 
-const base = { 'product.inStock': true, 'price.days': 30, 'price.low': 20, 'price.high': 24, 'price.vsLow': 1, 'need.ownedCovering': false, 'need.daysLeft': 4, 'user.avoidHit': '', 'budget.monthLeft': 100, 'rules.askAbove': 40, 'product.price': 20 };
+const base = { 'product.inStock': true, 'price.days': 30, 'price.low': 20, 'price.high': 24, 'price.vsLow': 1, 'need.ownedCovering': false, 'need.alreadyListed': false, 'need.daysLeft': 4, 'user.avoidHit': '', 'budget.monthLeft': 100, 'rules.askAbove': 40, 'product.price': 20 };
 
 export const SEED_POLICY = {
   version: 1, createdBy: 'seed', reason: 'Starting rules',
   rules: [
     { id: 'avoid-list', when: [{ fact: 'user.avoidHit', op: 'notEmpty' }], then: 'veto', because: 'It contains something you reacted to before.' },
     { id: 'already-own', when: [{ fact: 'need.ownedCovering', op: 'is', value: true }], then: 'veto', because: 'You already own something that covers this.' },
+    { id: 'already-listed', when: [{ fact: 'need.alreadyListed', op: 'is', value: true }], then: 'veto', because: 'One is already on your list from this week.' },
     { id: 'too-cheap', when: [{ fact: 'price.vsLow', op: 'lt', value: 0.7 }], then: 'ask', because: 'Far below its own price history: likely a wrong match, a different size or a fake.' },
     { id: 'over-item-limit', when: [{ fact: 'product.price', op: 'gtFact', value: 'rules.askAbove' }], then: 'ask', because: 'Above your per-item limit.' },
     { id: 'over-budget', when: [{ fact: 'product.price', op: 'gtFact', value: 'budget.monthLeft' }], then: 'ask', because: 'Would pass your monthly budget.' },
@@ -115,6 +117,7 @@ export const SEED_POLICY = {
     { name: 'fair price, needed → buy', facts: { ...base }, expect: 'buy' },
     { name: 'avoid-list beats a good price', facts: { ...base, 'user.avoidHit': 'vitamin c' }, expect: 'veto' },
     { name: 'already own → veto', facts: { ...base, 'need.ownedCovering': true }, expect: 'veto' },
+    { name: 'already on the list → veto', facts: { ...base, 'need.alreadyListed': true }, expect: 'veto' },
     { name: 'way below history → ask', facts: { ...base, 'product.price': 12, 'price.vsLow': 0.6 }, expect: 'ask' },
     { name: 'cheaper recently, time left → wait', facts: { ...base, 'product.price': 30, 'price.vsLow': 1.5, 'need.daysLeft': 30, 'price.high': 30 }, expect: 'wait' },
     { name: 'cheaper recently but running out → buy', facts: { ...base, 'product.price': 30, 'price.vsLow': 1.5, 'need.daysLeft': 3, 'price.high': 30 }, expect: 'buy' },

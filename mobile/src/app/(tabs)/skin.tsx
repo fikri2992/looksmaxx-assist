@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { Banner, Button, Card, Chip, Empty, Glyph, LifeBar, plural, Screen, Section, T } from '@/components/ui';
+import { Banner, Button, Card, Chip, Empty, Glyph, LifeBar, UseBy, plural, Screen, Section, T } from '@/components/ui';
 import { Radius, Spacing, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore, type CheckIn, type Item, type SkinTrait } from '@/lib/api';
@@ -95,6 +95,7 @@ export default function Skin() {
               <View style={{ flex: 1, gap: 4 }}>
                 <T variant="medium" numberOfLines={1}>{p.name}</T>
                 <LifeBar daysLeft={p.daysLeft} life={p.life} />
+                <UseBy a={p.afterOpening} />
               </View>
             </Card>
           </Pressable>

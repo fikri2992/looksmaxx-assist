@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Chip, Empty, LifeBar, Screen, Section, T } from '@/components/ui';
+import { Button, Card, Chip, Empty, LifeBar, UseBy, Screen, Section, T } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore, type Item } from '@/lib/api';
@@ -40,6 +40,7 @@ export default function Makeup() {
                 <T variant="medium" numberOfLines={1}>{i.name}</T>
                 <T variant="small" tone="textSecondary">{[i.type, i.color, i.finish].filter(Boolean).join(' · ')}</T>
                 <LifeBar daysLeft={i.daysLeft} life={i.life} />
+                <UseBy a={i.afterOpening} />
               </View>
             </Card>
           </Pressable>

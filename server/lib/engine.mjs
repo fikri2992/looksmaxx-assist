@@ -26,6 +26,17 @@ export function runOut(item, today = day(now())) {
   return { daysLeft: dayDiff(addDays(item.opened, life), today), life, basis: `opened ${item.opened}; ${item.type} usually lasts ~${life} days (assumption)` };
 }
 
+// Period after opening: how long a product is usually safe once opened (the open-jar symbol on the label).
+// Typical label values, used as an assumption when the person hasn't told us the real one.
+const AFTER_OPENING_MONTHS = { mascara: 3, eyeliner: 6, foundation: 12, concealer: 12, powder: 24, blush: 12, bronzer: 24, brow: 24, eyeshadow: 24, lipstick: 18, 'lip gloss': 12, 'setting spray': 12, primer: 12, cleanser: 12, toner: 12, serum: 6, moisturizer: 12, sunscreen: 12 };
+export function afterOpening(item, today = day(now())) {
+  const months = Number(item.paoMonths) || AFTER_OPENING_MONTHS[item.type];
+  if (!months || item.category === 'wardrobe' || !item.opened || item.status === 'finished') return null;
+  const useBy = addDays(item.opened, Math.round(months * 30.4));
+  const daysToUseBy = dayDiff(useBy, today);
+  return { months, useBy, daysToUseBy, past: daysToUseBy < 0, basis: item.paoMonths ? 'from the label' : `typical for ${item.type} (assumption)` };
+}
+
 // ---------- Earning context from photos ----------
 export async function readShelf(image) {
   const { json, cost } = await askVision(MODELS.vision, `This photo shows someone's skincare, makeup, clothes or other personal items. List each separate item you can see.
@@ -92,7 +103,17 @@ Return JSON only: {"fits":[0],"rejected":[{"i":1,"why":"under 8 words"}]}`, 6000
 }
 
 // Everything the policy may read, computed here in code so a model can't invent it.
-export async function factsFor({ product, offer, need, db, weather }) {
+// Another open decision from the last week for the same kind of thing (not voided or refunded, not this one or
+// the decision it follows up). Two plans asking for mascara on the same day should buy one.
+export function alreadyListed(db, need, exclude = []) {
+  if (!need?.type) return false;
+  const weekAgo = Date.now() - 7 * 86_400_000;
+  return db.decisions.some((d) => !exclude.includes(d.id) && d.product && ['buy', 'ask', 'wait'].includes(d.verdict)
+    && d.need?.type === need.type && d.need?.category === need.category && new Date(d.at).getTime() > weekAgo
+    && !['voided', 'refunded'].includes(d.paypal?.status));
+}
+
+export async function factsFor({ product, offer, need, db, weather, exclude = [] }) {
   const hist = await historyFor(product.id);
   const sum = summarize(hist.rows);
   const covering = need.coveredBy ? db.items.find((i) => i.id === need.coveredBy) : null;
@@ -104,6 +125,7 @@ export async function factsFor({ product, offer, need, db, weather }) {
     'product.price': offer.price, 'product.wasPrice': offer.was || 0, 'product.inStock': offer.inStock,
     'price.days': sum.days, 'price.low': sum.low ?? offer.price, 'price.high': sum.high ?? offer.price, 'price.vsLow': sum.low ? +(offer.price / sum.low).toFixed(3) : 1,
     'need.ownedCovering': !!covering && (left == null || left > 21), 'need.daysLeft': left ?? need.daysLeft ?? 30,
+    'need.alreadyListed': alreadyListed(db, need, exclude),
     'user.avoidHit': hit?.word || '',
     'budget.monthLeft': db.settings.rules.monthlyBudget - spent, 'rules.askAbove': db.settings.rules.askAbove,
     'weather.uvMax': weather?.uvMax ?? 0, 'weather.humidity': weather?.humidity ?? 0,
@@ -113,11 +135,11 @@ export async function factsFor({ product, offer, need, db, weather }) {
 }
 
 export async function planNeeds(goal, db) {
-  const owned = db.items.map((o) => ({ id: o.id, name: o.name, category: o.category, type: o.type, ...runOut(o) }));
+  const owned = db.items.map((o) => ({ id: o.id, name: o.name, category: o.category, type: o.type, ...runOut(o), useWithinDays: afterOpening(o)?.daysToUseBy }));
   const { json, cost } = await askJson(MODELS.plan, `You are a careful buyer for one person's skincare, makeup and wardrobe. Use what they own first.
 Goal: ${JSON.stringify(goal)}
 Latest skin check-in: ${JSON.stringify(db.checkins.find((c) => c.reading?.usable !== false)?.reading || null)}
-Owned: ${JSON.stringify(owned)}
+Owned (daysLeft = until it runs out; useWithinDays = until its after-opening period ends, negative means past it and worth replacing): ${JSON.stringify(owned)}
 Past reactions: ${JSON.stringify(db.reactions.map((r) => ({ item: r.item, note: r.note })))}
 List 2 to 6 things the goal needs. If an owned item covers one, set "coveredBy" to its id. Never suggest treating a medical condition.
 Return JSON only: {"needs":[{"need":"","category":"${CATEGORIES.join('|')}","type":"${TYPES}","query":"one concrete product search in plain words","mustBe":"what it physically is","why":"one sentence","coveredBy":null}]}`);
@@ -165,7 +187,7 @@ export async function decide(need, db) {
 
 function baseFacts(db) {
   // No product was looked up, so price facts are neutral: only ownership decides.
-  return { 'product.inStock': true, 'price.days': 30, 'price.vsLow': 1, 'need.ownedCovering': false, 'need.daysLeft': 30, 'user.avoidHit': '', 'budget.monthLeft': db.settings.rules.monthlyBudget, 'rules.askAbove': db.settings.rules.askAbove, 'product.price': 0 };
+  return { 'product.inStock': true, 'price.days': 30, 'price.vsLow': 1, 'need.ownedCovering': false, 'need.alreadyListed': false, 'need.daysLeft': 30, 'user.avoidHit': '', 'budget.monthLeft': db.settings.rules.monthlyBudget, 'rules.askAbove': db.settings.rules.askAbove, 'product.price': 0 };
 }
 
 // Authorize at purchase time, re-check live, then capture or void. Our account never keeps the money:
@@ -189,7 +211,7 @@ export async function execute(decision, db) {
     log('void', 'Final check could not confirm today’s price at the store. Released the hold; nothing was charged.', { decisionId: decision.id });
     return decision;
   }
-  const { facts } = await factsFor({ product: { ...decision.product, description: live?.description }, offer, need: decision.need, db, weather: decision.weather });
+  const { facts } = await factsFor({ product: { ...decision.product, description: live?.description }, offer, need: decision.need, db, weather: decision.weather, exclude: [decision.id, decision.followsUp].filter(Boolean) });
   const recheck = evaluate(activePolicy(), facts);
   decision.finalCheck = { at: now(), livePrice: offer.price, verdict: recheck.verdict, reasons: recheck.reasons };
   if (recheck.verdict === 'buy' && offer.price <= decision.product.price) {
@@ -225,7 +247,7 @@ export async function followUp(job, original, seen, db, { weather = null, simula
   const policy = activePolicy();
   const price = seen.price;
   const product = { ...original.product, price, store: seen.store || original.product.store };
-  const { facts, history } = await factsFor({ product, offer: { price, inStock: true, was: original.product.was }, need: original.need, db, weather });
+  const { facts, history } = await factsFor({ product, offer: { price, inStock: true, was: original.product.was }, need: original.need, db, weather, exclude: [original.id] });
   const r = evaluate(policy, facts);
   return {
     id: id('dec'), at: now(), need: original.need, policyVersion: policy.version, weather, rejected: [], alternatives: [], cost: 0,

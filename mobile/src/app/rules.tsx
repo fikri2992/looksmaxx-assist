@@ -10,7 +10,7 @@ import { useStore, type PolicyVersion, type Rule } from '@/lib/api';
 
 // Plain words for the rule language, so anyone can read what the agent will do.
 const FACT_WORDS: Record<string, string> = {
-  'user.avoidHit': 'it contains something you reacted to', 'need.ownedCovering': 'you already own something that covers it',
+  'user.avoidHit': 'it contains something you reacted to', 'need.ownedCovering': 'you already own something that covers it', 'need.alreadyListed': 'one is already on your list this week',
   'price.vsLow': 'price ÷ its recent low', 'price.days': 'days of price history', 'need.daysLeft': 'days until you run out',
   'product.price': 'price', 'product.wasPrice': 'the “was” price', 'product.title': 'the product name', 'product.inStock': 'in stock',
   'weather.uvMax': 'today’s UV', 'weather.humidity': 'humidity', 'budget.monthLeft': 'budget left this month', 'rules.askAbove': 'your per-item limit', 'price.high': 'its recent high',

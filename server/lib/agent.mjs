@@ -1,7 +1,7 @@
 // The conversational agent (GPT-6 Luna with tools). It reads everything the app knows about you, acts through
 // the same functions the screens use, and remembers what matters. Money decisions still go through the tested policy.
 import { chat } from './openai.mjs';
-import { alreadyBought, decide, proposeRule, runOut } from './engine.mjs';
+import { afterOpening, alreadyBought, decide, proposeRule, runOut } from './engine.mjs';
 import { makeImage } from './openai.mjs';
 import { readPhoto, savePhoto } from './photos.mjs';
 import { weatherToday } from './weather.mjs';
@@ -12,7 +12,7 @@ const MAX_STEPS = 6;
 const day = () => new Date().toISOString().slice(0, 10);
 
 function context(db, weather) {
-  const items = db.items.map((i) => ({ id: i.id, name: i.name, category: i.category, type: i.type, color: i.color || undefined, shade: i.shade || undefined, ...(i.category === 'wardrobe' ? { worn: (i.wears || []).length, lastWorn: (i.wears || []).at(-1) } : { daysLeft: runOut(i).daysLeft }), status: i.status !== 'active' ? i.status : undefined, photo: !!i.photoId }));
+  const items = db.items.map((i) => ({ id: i.id, name: i.name, category: i.category, type: i.type, color: i.color || undefined, shade: i.shade || undefined, ...(i.category === 'wardrobe' ? { worn: (i.wears || []).length, lastWorn: (i.wears || []).at(-1) } : { daysLeft: runOut(i).daysLeft, useWithinDays: afterOpening(i)?.daysToUseBy }), status: i.status !== 'active' ? i.status : undefined, photo: !!i.photoId }));
   const skin = db.checkins.filter((c) => c.reading?.usable !== false).slice(0, 4).map((c) => ({ date: c.at.slice(0, 10), demo: !c.live, skin: (c.reading.skin || []).map((s) => `${s.trait}:${s.level}`).join(', ') }));
   return `You are Shelfie, a personal agent for one person's wardrobe, skincare and makeup. You earn context before acting: check what they own, their skin timeline, today's weather and your memory first.
 Be brief and warm: 1-3 short sentences unless asked for more. Plain text only: no markdown, asterisks or headings, since the chat shows text as-is. Never diagnose skin conditions; describe appearance only and suggest a dermatologist for anything worrying.
