@@ -61,13 +61,14 @@ const routes = {
   'GET /api/health': async (req, res) => send(res, 200, { ok: true, busy, paypal: !!process.env.PAYPAL_SANDBOX_CLIENT_ID, store: !!process.env.STORE_SANDBOX_EMAIL, openrouter: !!process.env.OPENROUTER_API_KEY }),
 
   // ----- Items (CRUD across categories; category is a field, not a separate app) -----
-  'POST /api/items': async (req, res, body) => { const item = { id: id('itm'), createdAt: now(), status: 'active', source: 'manual', wears: [], ...(await withPhoto(body.item)) }; db.items.push(item); log('memory', `Added ${item.name}.`); await save(); send(res, 200, view()); },
+  'POST /api/items': async (req, res, body) => { if (body.item?.opened && !engine.isDay(body.item.opened)) return send(res, 400, { error: 'opened must be a real date like 2026-10-20' }); const item = { id: id('itm'), createdAt: now(), status: 'active', source: 'manual', wears: [], ...(await withPhoto(body.item)) }; db.items.push(item); log('memory', `Added ${item.name}.`); await save(); send(res, 200, view()); },
   // Only fields a person edits; ids, sources, photo ids and wear history can't be overwritten from outside.
   'PATCH /api/items': async (req, res, body) => {
     const item = db.items.find((i) => i.id === body.id); if (!item) return send(res, 404, { error: 'no such item' });
     const EDITABLE = ['name', 'brand', 'category', 'type', 'color', 'shade', 'finish', 'season', 'occasion', 'opened', 'status', 'notes', 'paoMonths', 'photo'];
     const patch = Object.fromEntries(Object.entries(body.patch || {}).filter(([k]) => EDITABLE.includes(k)));
     if (patch.paoMonths != null && !(Number(patch.paoMonths) >= 1 && Number(patch.paoMonths) <= 60)) return send(res, 400, { error: 'months after opening must be 1 to 60' });
+    if (patch.opened && !engine.isDay(patch.opened)) return send(res, 400, { error: 'opened must be a real date like 2026-10-20' });
     Object.assign(item, await withPhoto(patch), { updatedAt: now() }); await save(); send(res, 200, view());
   },
   'POST /api/items/wear': async (req, res, body) => { const item = db.items.find((i) => i.id === body.id); if (!item) return send(res, 404, { error: 'no such item' }); item.wears = [...(item.wears || []), body.date || now().slice(0, 10)]; await save(); send(res, 200, view()); },

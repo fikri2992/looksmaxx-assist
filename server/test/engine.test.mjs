@@ -63,3 +63,13 @@ test('a second open decision for the same kind of thing this week counts as alre
   db.decisions[0].paypal = { status: 'voided' };
   assert.equal(alreadyListed(db, need), false, 'a voided purchase is not on the list');
 });
+
+test('an impossible opened date reads as unknown instead of breaking the app', async () => {
+  const { isDay, afterOpening } = await import('../lib/engine.mjs');
+  assert.equal(isDay('2026-10-20'), true);
+  assert.equal(isDay('2026-13-45'), false);
+  assert.equal(isDay('2026-02-30'), false);
+  assert.equal(isDay('soon'), false);
+  assert.equal(runOut({ category: 'skincare', type: 'serum', opened: '2026-13-45' }).daysLeft, null);
+  assert.equal(afterOpening({ category: 'makeup', type: 'mascara', opened: '2026-13-45' }), null);
+});

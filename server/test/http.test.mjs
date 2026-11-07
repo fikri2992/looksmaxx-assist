@@ -81,6 +81,11 @@ test('editing an item takes only editable fields, and the label period moves its
   assert.equal((await patch({ id: m.id, patch: { paoMonths: 999 } })).status, 400);
 });
 
+test('an impossible opened date is refused and the state still loads', async () => {
+  assert.equal((await post('/api/items', { item: { name: 'Bad', category: 'skincare', type: 'serum', opened: '2026-13-45' } })).status, 400);
+  assert.equal((await get('/api/state')).status, 200);
+});
+
 test('on a public demo, reset returns to the persona', async () => {
   await post('/api/items', { item: { name: 'Junk', category: 'other', type: 'x' } });
   const s = await (await post('/api/reset')).json();

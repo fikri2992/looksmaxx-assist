@@ -1,7 +1,7 @@
 // The conversational agent (GPT-6 Luna with tools). It reads everything the app knows about you, acts through
 // the same functions the screens use, and remembers what matters. Money decisions still go through the tested policy.
 import { chat } from './openai.mjs';
-import { afterOpening, alreadyBought, decide, proposeRule, runOut } from './engine.mjs';
+import { afterOpening, alreadyBought, decide, isDay, proposeRule, runOut } from './engine.mjs';
 import { makeImage } from './openai.mjs';
 import { readPhoto, savePhoto } from './photos.mjs';
 import { weatherToday } from './weather.mjs';
@@ -108,12 +108,13 @@ async function runTool(name, args, db, ctx) {
   const find = (iid) => db.items.find((i) => i.id === iid);
   switch (name) {
     case 'add_item': {
-      const item = { id: id('itm'), createdAt: now(), status: 'active', source: 'told the agent', name: args.name, category: args.category, type: args.type, brand: args.brand || null, color: args.color || null, shade: args.shade_hex || null, finish: args.finish || null, season: args.season || null, occasion: args.occasion || null, opened: args.opened || null, wears: [] };
+      const item = { id: id('itm'), createdAt: now(), status: 'active', source: 'told the agent', name: args.name, category: args.category, type: args.type, brand: args.brand || null, color: args.color || null, shade: args.shade_hex || null, finish: args.finish || null, season: args.season || null, occasion: args.occasion || null, opened: isDay(args.opened) ? args.opened : null, wears: [] };
       db.items.push(item);
       return { ok: true, id: item.id, summary: `Added ${item.name}` };
     }
     case 'update_item': {
       const i = find(args.id); if (!i) return { ok: false, error: 'no such item' };
+      if (args.opened !== undefined && !isDay(args.opened)) return { ok: false, error: 'opened must be a real date like 2026-10-20' };
       for (const k of ['status', 'opened', 'color', 'notes']) if (args[k] !== undefined) i[k] = args[k];
       return { ok: true, summary: `Updated ${i.name}` };
     }
