@@ -32,7 +32,7 @@ const send = (res, status, body, type = 'application/json') => {
   res.end(JSON.stringify(body));
 };
 const bodyOf = async (req) => { let t = ''; for await (const c of req) t += c; return t ? JSON.parse(t) : {}; };
-const withRunOut = (i) => ({ ...i, ...engine.runOut(i) });
+const withRunOut = (i) => ({ ...i, ...engine.runOut(i), afterOpening: engine.afterOpening(i) });
 const view = () => ({
   settings: { ...db.settings, vaultId: undefined, pendingMandate: undefined, pendingOrder: undefined, hasPaypal: !!db.settings.vaultId, storeAccount: !!process.env.STORE_SANDBOX_EMAIL },
   items: db.items.map(withRunOut), checkins: db.checkins.slice(0, 60), reactions: db.reactions, decisions: db.decisions.slice(0, 100),

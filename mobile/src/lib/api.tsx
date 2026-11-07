@@ -13,6 +13,7 @@ export type Item = {
   id: string; name: string; brand?: string | null; category: Category; type: string; color?: string | null;
   opened?: string | null; status: 'active' | 'low' | 'finished'; source: string; createdAt: string;
   daysLeft: number | null; life: number | null; basis: string;
+  afterOpening?: { months: number; useBy: string; daysToUseBy: number; past: boolean; basis: string } | null;
   photoId?: string | null; wears?: string[]; shade?: string | null; finish?: string | null; season?: string | null; occasion?: string | null;
 };
 export type Memory = { id: string; at: string; text: string; kind: string; source: string };

@@ -41,6 +41,7 @@ const items = [
   { key: 'lipstick', name: 'Nude matte lipstick', category: 'makeup', type: 'lipstick', color: 'nude', shade: '#C08A74', finish: 'matte', opened: daysAgo(30) },
   { key: 'brow', name: 'Brown brow pencil', category: 'makeup', type: 'brow', color: 'brown', opened: daysAgo(70) },
   { key: 'blush', name: 'Rose cream blush', category: 'makeup', type: 'blush', color: 'rose', shade: '#C97B84', finish: 'dewy', opened: daysAgo(90) },
+  { key: 'mascara', name: 'Black lengthening mascara', category: 'makeup', type: 'mascara', color: 'black', shade: '#1E1A17', opened: daysAgo(120) },
   { key: 'linen-top', name: 'Black linen top', category: 'wardrobe', type: 'top', color: 'black', photo: 'black sleeveless linen top', wears: [12, 5] },
   { key: 'tee', name: 'Black cotton tee', category: 'wardrobe', type: 'top', color: 'black', photo: 'plain black crew-neck cotton t-shirt', wears: [9, 6, 2] },
   { key: 'blouse', name: 'Black silk blouse', category: 'wardrobe', type: 'top', color: 'black', photo: 'black silk button-up blouse', wears: [] },

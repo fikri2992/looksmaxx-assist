@@ -136,6 +136,15 @@ export function Glyph({ category, size = 40 }: { category: Category; size?: numb
   );
 }
 
+// How long it's safe once opened (the open-jar symbol). Past it is flagged; the value is an assumption unless set.
+export function UseBy({ a }: { a?: { months: number; useBy: string; daysToUseBy: number; past: boolean } | null }) {
+  if (!a) return null;
+  const when = new Date(`${a.useBy}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return a.past
+    ? <T variant="small" tone="veto">{`Past its ${a.months}-month after-opening period (${when}). Worth replacing.`}</T>
+    : <T variant="small" tone={a.daysToUseBy <= 30 ? 'wait' : 'textSecondary'}>{`Use by ${when} · ${a.months} months after opening`}</T>;
+}
+
 // Days left as a bar. Unknown stays grey and says so.
 export function LifeBar({ daysLeft, life }: { daysLeft: number | null; life: number | null }) {
   const t = useTheme();
