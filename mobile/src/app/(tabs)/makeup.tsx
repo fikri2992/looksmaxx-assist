@@ -17,14 +17,15 @@ export default function Makeup() {
   const [type, setType] = useState('all');
   const all = (state?.items ?? []).filter((i) => i.category === 'makeup');
   const types = ['all', ...new Set(all.map((i) => i.type))];
-  const items = all.filter((i) => type === 'all' || i.type === type);
+  // Anything past its after-opening period goes first: it's the one that needs doing.
+  const items = all.filter((i) => type === 'all' || i.type === type).sort((a, b) => Number(!!b.afterOpening?.past) - Number(!!a.afterOpening?.past));
   const seen = state?.checkins.find((c) => c.reading.makeup?.wearing)?.reading.makeup;
 
   return (
     <Screen title="Makeup" kicker={`${all.length} products`} right={<Button label="Add" icon="plus" onPress={() => router.push({ pathname: '/item', params: { category: 'makeup' } })} />}>
       {all.length ? (
         <View style={[styles.palette, { backgroundColor: t.surface, borderColor: t.line }]} accessibilityLabel="Your shades">
-          {all.map((i) => <View key={i.id} style={[styles.swatch, { backgroundColor: hexFor(i) ?? t.backgroundElement, borderColor: t.line }]} />)}
+          {all.map((i) => <View key={i.id} style={[styles.swatch, { backgroundColor: hexFor(i) ?? t.backgroundElement, borderColor: t.textSecondary }]} />)}
         </View>
       ) : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.two }}>
@@ -35,7 +36,7 @@ export default function Makeup() {
         : items.map((i) => (
           <Pressable key={i.id} onPress={() => router.push({ pathname: '/item', params: { id: i.id } })} accessibilityRole="button" accessibilityLabel={`Edit ${i.name}`}>
             <Card style={{ flexDirection: 'row', gap: Spacing.three, alignItems: 'center' }}>
-              <View style={[styles.bigSwatch, { backgroundColor: hexFor(i) ?? t.backgroundElement, borderColor: t.line }]} />
+              <View style={[styles.bigSwatch, { backgroundColor: hexFor(i) ?? t.backgroundElement, borderColor: t.textSecondary }]} />
               <View style={{ flex: 1, gap: 4 }}>
                 <T variant="medium" numberOfLines={1}>{i.name}</T>
                 <T variant="small" tone="textSecondary">{[i.type, i.color, i.finish].filter(Boolean).join(' · ')}</T>
