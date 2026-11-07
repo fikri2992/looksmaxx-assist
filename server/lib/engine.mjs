@@ -196,6 +196,57 @@ export async function execute(decision, db) {
   return decision;
 }
 
+// ---------- Watch jobs: "wait" decisions come back on their own ----------
+
+// Today's lowest new, in-stock USD offer from Channel3, falling back to the newest logged price.
+export async function livePrice(productId) {
+  const live = await productDetails(productId).catch(() => null);
+  const prices = (live?.offers || []).filter((o) => o.inStock !== false && o.currency === 'USD' && (o.condition ?? 'new') === 'new').map((o) => o.price);
+  if (prices.length) return Math.min(...prices);
+  return (await historyFor(productId)).rows.at(-1)?.price ?? null;
+}
+
+// A fired watch re-runs the same tested rules on the new price. No model call: the need, product and rules
+// are already known, so this costs nothing and can run unattended.
+export async function followUp(job, original, price, db, { weather = null, simulated = false } = {}) {
+  const policy = activePolicy();
+  const product = { ...original.product, price };
+  const { facts, history } = await factsFor({ product, offer: { price, inStock: true, was: original.product.was }, need: original.need, db, weather });
+  const r = evaluate(policy, facts);
+  return {
+    id: id('dec'), at: now(), need: original.need, policyVersion: policy.version, weather, rejected: [], alternatives: [], cost: 0,
+    verdict: r.verdict, reasons: r.reasons, facts, product,
+    history: { source: history.source, ourDays: history.ourDays, rows: history.rows.slice(-40) },
+    followsUp: original.id, trigger: { kind: 'watch', jobId: job.id, price, target: job.trigger.price, simulated },
+  };
+}
+
+// Checks every open watch. When one fires, the agent decides again; if that says buy and PayPal is approved,
+// it buys through the usual authorize → final check → capture or void. Otherwise the buy waits for your tap.
+// `simulate` ({jobId: price}) stands in for a price drop in demos; such decisions are labelled simulated.
+export async function runWatches(db, { simulate = {}, priceOf = livePrice, weather } = {}) {
+  const fired = [];
+  if (weather === undefined) weather = await weatherToday(db.settings.location.lat, db.settings.location.lon).then((w) => w[0]).catch(() => null);
+  for (const job of db.watchJobs.filter((j) => !j.firedAt)) {
+    const simulated = simulate[job.id] != null;
+    const price = simulated ? Number(simulate[job.id]) : await priceOf(job.productId);
+    Object.assign(job, { lastRun: now(), lastPrice: price });
+    if (price == null || price > job.trigger.price) continue;
+    job.firedAt = now();
+    log('watch', `Watch fired: ${job.title} is $${price}${simulated ? ' (simulated for the demo)' : ''}, at or under $${job.trigger.price}. Deciding again.`);
+    const original = db.decisions.find((d) => d.id === job.decisionId);
+    if (!original?.product) { fired.push({ job }); continue; }
+    const d = await followUp(job, original, price, db, { weather, simulated });
+    db.decisions.unshift(d);
+    job.followUpId = d.id;
+    log(d.verdict, `${d.need.need} at $${price}: ${d.reasons.filter((r) => r.then === d.verdict).map((r) => r.because).join(' ')}`, { decisionId: d.id });
+    if (d.verdict === 'buy' && db.settings.vaultId) await execute(d, db).catch((e) => log('error', `Buying after the watch fired: ${e.message}`));
+    else if (d.verdict === 'buy') log('approve', 'Ready to buy at the lower price. It needs your one PayPal approval first.', { decisionId: d.id });
+    fired.push({ job, decision: d });
+  }
+  return fired;
+}
+
 // ---------- Learning: a reaction becomes a tested rule ----------
 export async function proposeRule(reaction, db) {
   const current = activePolicy();

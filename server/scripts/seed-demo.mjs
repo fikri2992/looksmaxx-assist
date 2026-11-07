@@ -85,6 +85,12 @@ console.log('✔ preferences told to the agent');
 
 const p = await call('POST', '/api/plan', { goal: 'Keep my daily skincare stocked for hot, high-UV days, and a natural makeup look for work.' });
 for (const d of p.decisions || []) console.log(`  ${d.verdict.padEnd(4)} ${d.need.need} → ${d.product ? `${d.product.title.slice(0, 44)} $${d.product.price}` : d.note || ''}`);
+// Make sure the demo shows a price watch: if the plan didn't wait on anything, watch the first "ask" at its low.
+const afterPlan = await call('GET', '/api/state');
+if (!afterPlan.watchJobs.length) {
+  const d = afterPlan.decisions.find((x) => x.product && ['ask', 'wait'].includes(x.verdict));
+  if (d) { await call('POST', '/api/watch', { id: d.id }); console.log(`✔ watching ${d.product.title.slice(0, 40)}`); }
+}
 await call('POST', '/api/outfit');
 const final = await call('GET', '/api/state');
 console.log(`✔ insights: ${final.insights.results.filter((x) => x.verdict !== 'not enough data').map((x) => `${x.name} ${x.verdict}`).join('; ')}`);

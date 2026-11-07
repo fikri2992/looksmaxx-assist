@@ -12,7 +12,7 @@ const { movers, historyFor, summarize, observatory } = await import('./lib/price
 const { weatherToday } = await import('./lib/weather.mjs');
 const { modelSpend } = await import('./lib/models.mjs');
 const { runTests } = await import('./lib/policy.mjs');
-const { converse, createLook } = await import('./lib/agent.mjs');
+const { converse, createLook, watchPrice } = await import('./lib/agent.mjs');
 const { whatWorks } = await import('./lib/insights.mjs');
 const { savePhoto, readPhoto, prunePhotos } = await import('./lib/photos.mjs');
 const { transcribe, speak, spentToday } = await import('./lib/openai.mjs');
@@ -188,13 +188,16 @@ const routes = {
     Object.assign(d.paypal, { refundId: r.refundId, refundedAt: now(), status: 'refunded' });
     log('refund', `Refunded $${d.paypal.amount} for ${d.product.title}. PayPal refund ${r.refundId}.`);
   }),
-  'POST /api/watch/run': (req, res) => exclusive(res, 'Running watch jobs', async () => {
-    for (const job of db.watchJobs.filter((j) => !j.firedAt)) {
-      const { rows } = await historyFor(job.productId);
-      const latest = rows.at(-1)?.price;
-      job.lastRun = now();
-      if (latest != null && latest <= job.trigger.price) { job.firedAt = now(); log('watch', `Watch job ${job.id} fired: ${job.title} is $${latest}, at or under $${job.trigger.price}.`); }
-    }
+  // Watch a decision's product for a lower price (defaults to its 30-day low).
+  'POST /api/watch': async (req, res, body) => {
+    const r = watchPrice(db, body.id, body.price, 'you');
+    if (!r.ok) return send(res, 400, { ...view(), error: r.error });
+    log('watch', r.summary); await save(); send(res, 200, view());
+  },
+  // Body may carry {simulate: {jobId: price}} to stand in for a price drop in demos; those decisions say so.
+  'POST /api/watch/run': (req, res, body) => exclusive(res, 'Running watch jobs', async () => {
+    const fired = await engine.runWatches(db, { simulate: body?.simulate || {} });
+    return { fired: fired.length };
   }),
 
   // ----- Evidence -----
@@ -268,3 +271,12 @@ createServer(async (req, res) => {
   const body = req.method === 'GET' ? {} : await bodyOf(req).catch(() => ({}));
   try { await handler(req, res, body); } catch (e) { console.error(e); send(res, 500, { error: e.message }); }
 }).listen(port, () => console.log(`Shelfie server: ${baseUrl}`));
+
+// Watch jobs run on their own: every WATCH_EVERY_HOURS (default 6, 0 turns it off), skipped while busy.
+const watchEvery = Number(process.env.WATCH_EVERY_HOURS ?? 6);
+if (watchEvery > 0) setInterval(async () => {
+  if (busy || !db.watchJobs.some((j) => !j.firedAt)) return;
+  busy = 'Running watch jobs';
+  try { await engine.runWatches(db); await save(); } catch (e) { log('error', `Watch run: ${e.message}`); }
+  finally { busy = null; }
+}, watchEvery * 3_600_000);

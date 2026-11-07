@@ -129,8 +129,13 @@ function Signal({ icon, label, value, note }: { icon: IconName; label: string; v
 
 function DecisionCard({ d }: { d: Decision }) {
   const t = useTheme();
-  const { act } = useStore();
+  const { state, act } = useStore();
   const top = d.reasons.find((r) => r.then === d.verdict) ?? d.reasons[0];
+  // Offer a price watch (same default as the server: the 30-day low, or 10% off when already at the low).
+  const low = typeof d.facts?.['price.low'] === 'number' ? d.facts['price.low'] : null;
+  const target = d.product ? (low != null && low < d.product.price ? low : +(d.product.price * 0.9).toFixed(2)) : null;
+  const canWatch = !d.paypal && d.product && (d.verdict === 'ask' || d.verdict === 'wait')
+    && !state?.watchJobs.some((j) => j.decisionId === d.id || (j.productId === d.product?.id && !j.firedAt));
   const prices = d.history?.rows.map((r) => r.price) ?? [];
   const lo = prices.length ? Math.min(...prices) : null;
   const hi = prices.length ? Math.max(...prices) : null;
@@ -161,9 +166,11 @@ function DecisionCard({ d }: { d: Decision }) {
         </View>
       ) : null}
       {d.substitutedFor ? <T variant="small" tone="veto">{`Swapped in an alternative: the first match ${d.substitutedFor.reason}.`}</T> : null}
+      {d.trigger?.kind === 'watch' ? <T variant="small" tone="wait">{`Came back on its own: its price watch fired at $${d.trigger.price} (target $${d.trigger.target}), so it decided again.${d.trigger.simulated ? ' Demo: the price drop was simulated.' : ''}`}</T> : null}
       {d.paypal ? <PayPalTrail d={d} /> : null}
       {!d.paypal && d.verdict === 'buy' && d.product ? <Button kind="buy" icon="shield-check-outline" label={`Let the agent buy · $${d.product.price.toFixed(2)}`} onPress={() => act('Authorizing, re-checking, then paying', '/api/buy', { id: d.id })} /> : null}
       {!d.paypal && d.verdict === 'ask' && d.product ? <Button kind="quiet" icon="account-check-outline" label="Approve and buy" onPress={() => act('Authorizing, re-checking, then paying', '/api/buy', { id: d.id, override: true })} /> : null}
+      {canWatch ? <Button kind="quiet" icon="bell-ring-outline" label={`Watch for $${target} instead`} onPress={() => act('Setting a price watch', '/api/watch', { id: d.id })} /> : null}
     </Card>
   );
 }

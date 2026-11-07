@@ -46,7 +46,7 @@ export const TOOLS = [
   fn('create_look', 'Generate an image of an outfit or makeup look from owned items (uses their photos when available). Costs money: only when asked or clearly useful.', { item_ids: IDS, style_note: S }, ['item_ids']),
   fn('check_purchase', 'Ask the buying engine whether to buy something. It searches real products and applies the tested rules.', { need: S, query: { type: 'string', description: 'one concrete product search' }, category: CATEGORY, type: S, must_be: S }, ['need', 'query', 'category', 'type']),
   fn('money_summary', 'What was spent this month against the budget, each PayPal purchase and its status, and the price watches running.', {}),
-  fn('watch_price', 'Watch a product from an earlier decision and flag it when the price drops to a target (defaults to its 30-day low).', { decision_id: S, target_price: N }, ['decision_id']),
+  fn('watch_price', 'Watch a product from an earlier decision and flag it when the price drops to a target (defaults to its 30-day low, or 10% under the current price if it is already at the low).', { decision_id: S, target_price: N }, ['decision_id']),
   fn('refund_purchase', 'Prepare a refund of a captured PayPal purchase. It does not move money: it shows the person a button, and only their tap refunds.', { decision_id: S, reason: S }, ['decision_id', 'reason']),
 ];
 
@@ -66,13 +66,16 @@ export function moneySummary(db) {
   };
 }
 
-export function watchPrice(db, decisionId, target) {
+// Default target: the 30-day low when today's price is above it, otherwise 10% under today's price.
+export const watchTarget = (d) => { const low = d.facts?.['price.low']; return low != null && low < d.product.price ? low : +(d.product.price * 0.9).toFixed(2); };
+
+export function watchPrice(db, decisionId, target, createdBy = 'agent') {
   const d = db.decisions.find((x) => x.id === decisionId);
   if (!d?.product) return { ok: false, error: 'no product on that decision' };
-  const price = Number(target ?? d.facts?.['price.low'] ?? d.product.price);
+  const price = Number(target ?? watchTarget(d));
   if (!(price > 0)) return { ok: false, error: 'no target price' };
   if (db.watchJobs.some((j) => j.productId === d.product.id && !j.firedAt)) return { ok: true, summary: `Already watching ${d.product.title}` };
-  db.watchJobs.push({ id: id('job'), createdAt: now(), createdBy: 'agent', decisionId: d.id, productId: d.product.id, title: d.product.title, trigger: { op: 'lte', price }, everyHours: 24, lastRun: null, firedAt: null });
+  db.watchJobs.push({ id: id('job'), createdAt: now(), createdBy, decisionId: d.id, productId: d.product.id, title: d.product.title, trigger: { op: 'lte', price }, everyHours: 24, lastRun: null, firedAt: null });
   return { ok: true, summary: `Watching ${d.product.title} for $${price} or less` };
 }
 

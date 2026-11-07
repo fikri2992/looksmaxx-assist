@@ -99,6 +99,7 @@ async function main() {
       { headerName: 'History', width: 150, sortable: false, filter: false, cellRenderer: (p) => spark(p.data.history?.rows?.map((r) => r.price), p.data.product?.price) },
       { headerName: 'Days', valueGetter: (p) => p.data.history?.rows?.length ?? null, width: 85, type: 'numericColumn' },
       { headerName: 'Why', valueGetter: (p) => (p.data.reasons.find((r) => r.then === p.data.verdict) ?? p.data.reasons[0])?.because, flex: 1.4, minWidth: 240, tooltipValueGetter: (p) => p.value },
+      { headerName: 'Started by', valueGetter: (p) => (p.data.trigger?.kind === 'watch' ? (p.data.trigger.simulated ? 'watch (simulated drop)' : 'price watch') : 'request'), width: 170 },
       { headerName: 'Rules', valueGetter: (p) => 'v' + p.data.policyVersion, width: 85 },
       { headerName: 'PayPal', valueGetter: (p) => p.data.paypal?.status ?? '', width: 110 },
       { headerName: 'Capture / auth', valueGetter: (p) => p.data.paypal?.captureId ?? p.data.paypal?.authId ?? '', width: 170 },
