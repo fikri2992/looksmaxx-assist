@@ -55,5 +55,6 @@ test('a fired watch decides again with the tested rules, labelled, and moves no 
   assert.equal(d.paypal, undefined, 'no PayPal call without an approved payment method');
   assert.ok(db.watchJobs[0].firedAt);
   assert.equal(db.watchJobs[0].followUpId, d.id);
-  assert.equal((await runWatches(db, { simulate: { job_1: low }, weather: null })).length, 0, 'a fired watch stays fired');
+  await assert.rejects(runWatches(db, { simulate: { job_1: low }, weather: null }), /open watch/, 'a fired watch stays fired');
+  assert.equal((await runWatches(db, { priceOf: async () => low, weather: null })).length, 0);
 });
