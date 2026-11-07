@@ -30,7 +30,8 @@ export default function Today() {
         <T variant="small" style={{ color: t.background, opacity: 0.75 }}>Your agent, lately</T>
         <View style={styles.tally}>
           <Tally n={count('veto')} label="skipped" color={t.background} />
-          <Tally n={count('wait')} label="waiting" color={t.background} />
+          {/* Waiting = decisions to wait plus price watches still open. */}
+          <Tally n={count('wait') + (state?.watchJobs.filter((j) => !j.firedAt).length ?? 0)} label="waiting" color={t.background} />
           <Tally n={count('buy')} label="to buy" color={t.background} />
           <Tally n={recent.filter((d) => d.paypal?.status === 'captured').length} label="paid" color={t.background} />
         </View>

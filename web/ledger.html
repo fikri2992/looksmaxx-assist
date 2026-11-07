@@ -90,7 +90,7 @@ async function main() {
   const paid = d.filter((x) => x.paypal?.status === 'captured');
   const tile = (n, label) => `<div class="tile"><b>${n}</b><span class="muted">${label}</span></div>`;
   document.getElementById('tiles').innerHTML = [
-    tile(d.filter((x) => x.verdict === 'veto').length, 'skipped'), tile(d.filter((x) => x.verdict === 'wait').length, 'waiting'),
+    tile(d.filter((x) => x.verdict === 'veto').length, 'skipped'), tile(d.filter((x) => x.verdict === 'wait').length + state.watchJobs.filter((j) => !j.firedAt).length, 'waiting or watched'),
     tile(d.filter((x) => x.verdict === 'buy').length, 'to buy'), tile(paid.length, `paid · ${money(paid.reduce((a, x) => a + (x.paypal.amount || 0), 0))}`),
     tile(obs.filter((o) => o.moved).length + '/' + obs.length, 'products whose price moved'), tile('v' + state.policy.version, `rules · ${state.policy.rules.length} rules`),
   ].join('');
