@@ -20,15 +20,15 @@ const dataUrl = (bytes, type) => `data:${type};base64,${bytes.toString('base64')
 const photoCache = path.join(repoRoot, 'server', 'data', 'seed-photos');
 
 async function productPhoto(key, description) {
-  const file = path.join(photoCache, `${key}.png`);
+  const file = path.join(photoCache, `${key}.jpg`);
   const cached = await readFile(file).catch(() => null);
-  if (cached) return dataUrl(cached, 'image/png');
+  if (cached) return dataUrl(cached, 'image/jpeg');
   if (!withPhotos) return null;
   const { makeImage } = await import('../lib/openai.mjs');
-  const png = await makeImage(`Clean product photo of a single ${description}, laid flat on a warm off-white background, soft daylight, no people, no text, no logos, no brand marks.`);
+  const jpg = await makeImage(`Clean product photo of a single ${description}, laid flat on a warm off-white background, soft daylight, no people, no text, no logos, no brand marks.`);
   await mkdir(photoCache, { recursive: true });
-  await writeFile(file, png);
-  return dataUrl(png, 'image/png');
+  await writeFile(file, jpg);
+  return dataUrl(jpg, 'image/jpeg');
 }
 
 await call('POST', '/api/reset');

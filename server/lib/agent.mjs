@@ -52,7 +52,7 @@ export async function createLook(db, itemIds, note = '') {
   const refs = [];
   for (const i of items.filter((x) => x.photoId)) refs.push({ bytes: await readPhoto(i.photoId), type: i.photoId.endsWith('png') ? 'image/png' : 'image/jpeg' });
   const prompt = `${refs.length ? 'Using the reference photos of these exact items,' : 'Create'} an editorial flat-lay styling image of this look on a warm neutral background, no people, no text, no logos. Show only these items and nothing else, no added shoes, bags or accessories, since the person owns only these: ${items.map((i) => `${i.color ? `${i.color} ` : ''}${i.name} (${i.type})`).join('; ')}.${note ? ` Style: ${note}.` : ''}`;
-  const photoId = await savePhoto(await makeImage(prompt, refs), 'png');
+  const photoId = await savePhoto(await makeImage(prompt, refs), 'jpg');
   const look = { id: id('look'), at: now(), itemIds: items.map((i) => i.id), photoId, note, fromPhotos: refs.length };
   db.looks.unshift(look);
   log('look', `Made a look from ${items.length} items${refs.length ? `, using ${refs.length} of your photos` : ''}.`);
