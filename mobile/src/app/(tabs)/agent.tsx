@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Banner, plural, Stamp, T } from '@/components/ui';
+import { Banner, Button, plural, Stamp, T } from '@/components/ui';
 import { MaxContentWidth, Radius, Spacing, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { API_URL, mediaUrl, useStore, type ChatMessage } from '@/lib/api';
@@ -96,7 +96,7 @@ export default function AgentChat() {
 
 function Bubble({ m }: { m: ChatMessage }) {
   const t = useTheme();
-  const { state } = useStore();
+  const { state, busy, act } = useStore();
   const mine = m.role === 'user';
   return (
     <View style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 6 }}>
@@ -118,6 +118,18 @@ function Bubble({ m }: { m: ChatMessage }) {
         if (a.kind === 'look' && a.photoId) return <Image key={i} source={mediaUrl(a.photoId)} style={styles.look} contentFit="cover" accessibilityLabel="Generated look" />;
         const d = state?.decisions.find((x) => x.id === a.decisionId);
         if (!d) return null;
+        // The agent prepared a refund; money only moves when you tap.
+        if (a.kind === 'refund') {
+          const done = d.paypal?.status === 'refunded';
+          return (
+            <View key={i} style={[styles.decision, { borderColor: t.line, backgroundColor: t.surface, flexDirection: 'column', alignItems: 'stretch' }]}>
+              <T variant="small">{`${d.product?.title ?? 'Purchase'} · $${d.paypal?.amount ?? '?'}`}</T>
+              <T variant="small" tone="textSecondary">{`Reason: ${a.reason ?? 'Returned'}`}</T>
+              {done ? <T variant="small" tone="buy">Refunded through PayPal</T>
+                : <Button kind="veto" icon="cash-refund" label={`Refund $${d.paypal?.amount ?? ''} to PayPal`} disabled={!!busy} onPress={() => act('Refunding', '/api/refund', { id: d.id, reason: a.reason })} />}
+            </View>
+          );
+        }
         return (
           <Pressable key={i} onPress={() => router.push('/')} style={[styles.decision, { borderColor: t.line, backgroundColor: t.surface }]}>
             <Stamp verdict={d.verdict} />

@@ -18,7 +18,7 @@ export type Item = {
 export type Memory = { id: string; at: string; text: string; kind: string; source: string };
 export type DiaryEntry = { id: string; date: string; am?: string[]; pm?: string[]; feel?: string | null; notes?: string };
 export type Look = { id: string; at: string; itemIds: string[]; photoId: string; note: string; fromPhotos: number };
-export type ChatMessage = { id: string; at: string; role: 'user' | 'assistant'; text: string; voice?: boolean; actions?: { tool: string; summary: string; ok: boolean }[]; attachments?: { kind: 'look' | 'decision'; lookId?: string; photoId?: string; decisionId?: string }[] };
+export type ChatMessage = { id: string; at: string; role: 'user' | 'assistant'; text: string; voice?: boolean; actions?: { tool: string; summary: string; ok: boolean }[]; attachments?: { kind: 'look' | 'decision' | 'refund'; lookId?: string; photoId?: string; decisionId?: string; reason?: string }[] };
 export const mediaUrl = (id?: string | null) => (id ? `${API_URL}/photos/${id}` : null);
 export type SkinTrait = { trait: string; level: 'none' | 'mild' | 'noticeable'; where?: string | null; confidence?: number };
 export type CheckIn = {
