@@ -26,6 +26,9 @@
   .v-buy { color:var(--buy); } .v-wait { color:var(--wait); } .v-veto { color:var(--veto); } .v-ask { color:var(--ask); }
   .note { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-top:10px; }
   a { color:var(--accent); }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; }
+  .bar input { flex:1; min-width:180px; font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:8px 12px; }
+  .bar button { font:500 14px 'Instrument Sans', sans-serif; color:var(--ink); background:var(--el); border:1px solid var(--line); border-radius:10px; padding:8px 12px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -41,11 +44,17 @@
 
   <h2>Decisions</h2>
   <div class="muted">Skips first. Click a column to sort or filter.</div>
+  <div class="bar" data-for="decisions"></div>
   <div id="decisions" class="grid"></div>
 
   <h2>Price observatory</h2>
   <div class="muted">Channel3’s history saved at seed time, plus our own daily snapshots. A store’s “was” price is checked against this, not trusted.</div>
+  <div class="bar" data-for="prices"></div>
   <div id="prices" class="grid"></div>
+
+  <h2>Price watches</h2>
+  <div class="muted">“Wait” turned into an action: each watch re-runs the tested rules when its price drops, and can buy through PayPal.</div>
+  <div id="watches" class="grid" style="height:240px"></div>
 
   <h2>How the rules changed</h2>
   <div class="muted">A rule the agent writes goes live only after every old and new test passes.</div>
@@ -86,7 +95,7 @@ async function main() {
     tile(obs.filter((o) => o.moved).length + '/' + obs.length, 'products whose price moved'), tile('v' + state.policy.version, `rules · ${state.policy.rules.length} rules`),
   ].join('');
 
-  agGrid.createGrid(document.getElementById('decisions'), {
+  const decisionsApi = agGrid.createGrid(document.getElementById('decisions'), {
     theme, rowData: [...d].sort((a, b) => ORDER[a.verdict] - ORDER[b.verdict]),
     defaultColDef: { sortable: true, resizable: true, filter: true },
     columnDefs: [
@@ -107,7 +116,7 @@ async function main() {
     rowHeight: 44, tooltipShowDelay: 300,
   });
 
-  agGrid.createGrid(document.getElementById('prices'), {
+  const pricesApi = agGrid.createGrid(document.getElementById('prices'), {
     theme, rowData: [...obs].sort((a, b) => (b.moved - a.moved) || (b.high / b.low) - (a.high / a.low)),
     defaultColDef: { sortable: true, resizable: true, filter: true },
     columnDefs: [
@@ -139,6 +148,29 @@ async function main() {
     ],
     rowHeight: 40,
   });
+
+  agGrid.createGrid(document.getElementById('watches'), {
+    theme, rowData: state.watchJobs.map((j) => ({ ...j, follow: d.find((x) => x.id === j.followUpId) })),
+    defaultColDef: { sortable: true, resizable: true, filter: true },
+    columnDefs: [
+      { headerName: 'Product', field: 'title', flex: 1.4, minWidth: 220, tooltipField: 'title' },
+      { headerName: 'Target', valueGetter: (p) => p.data.trigger.price, valueFormatter: (p) => money(p.value), width: 100, type: 'numericColumn' },
+      { headerName: 'Last price', field: 'lastPrice', valueFormatter: (p) => money(p.value), width: 110, type: 'numericColumn' },
+      { headerName: 'Set by', valueGetter: (p) => (p.data.createdBy === 'you' ? 'you' : 'the agent'), width: 110 },
+      { headerName: 'Status', valueGetter: (p) => (p.data.firedAt ? 'fired' : 'watching'), width: 110, cellStyle: (p) => ({ color: p.value === 'fired' ? css('--buy') : css('--muted') }) },
+      { headerName: 'Then decided', valueGetter: (p) => p.data.follow?.verdict ?? '', width: 140, cellRenderer: (p) => (p.value ? `<span class="stamp v-${p.value}">${LABEL[p.value]}</span>` : '') },
+      { headerName: 'Simulated', valueGetter: (p) => (p.data.follow?.trigger?.simulated ? 'demo' : ''), width: 110 },
+    ],
+    rowHeight: 40, overlayNoRowsTemplate: '<span class="muted">No watches yet.</span>',
+  });
+
+  // Search and CSV export over each big grid (AG Grid quick filter and CSV export, both Community).
+  for (const [id, api, name] of [['decisions', decisionsApi, 'shelfie-decisions'], ['prices', pricesApi, 'shelfie-prices']]) {
+    const bar = document.querySelector(`.bar[data-for="${id}"]`);
+    bar.innerHTML = `<input type="search" placeholder="Search ${id}…" aria-label="Search ${id}"><button type="button">Export CSV</button>`;
+    bar.querySelector('input').addEventListener('input', (e) => api.setGridOption('quickFilterText', e.target.value));
+    bar.querySelector('button').addEventListener('click', () => api.exportDataAsCsv({ fileName: `${name}.csv`, processCellCallback: (p) => (p.column.getColDef().headerName === 'History' ? '' : p.value) }));
+  }
 
   document.getElementById('foot').innerHTML = `Products and prices from <a href="https://trychannel3.com" rel="noopener">Channel3</a>. Payments through PayPal sandbox: the agent authorizes at purchase time, re-checks the live price, then captures to the store or releases the hold. Grids by AG Grid Community. Demo data is labelled in the app.`;
 }
