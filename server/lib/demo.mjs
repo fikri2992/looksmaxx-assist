@@ -13,9 +13,14 @@ const demoDb = path.join(demoDir, 'db.json');
 const demoPhotos = path.join(demoDir, 'photos');
 
 // Private or one-off state that must never ship in the public repo.
+// PayPal ids and the store's sandbox email are reduced to status and amount; ids in log text are blanked.
+const PAYPAL_ID = /\b(?=[A-Z0-9]*\d)[A-Z0-9]{12,20}\b/g; // ids mix capitals and digits
 export function scrub(db) {
   const copy = structuredClone(db);
   Object.assign(copy.settings, { vaultId: null, pendingOrder: null, pendingMandate: null });
+  for (const d of copy.decisions) if (d.paypal) d.paypal = { status: d.paypal.status || 'authorized', amount: d.paypal.amount ?? d.paypal.authorized ?? null, demo: true };
+  for (const l of copy.log) if (/PayPal|Authorized|capture|refund/i.test(l.text)) l.text = l.text.replace(PAYPAL_ID, '…');
+  for (const m of copy.chat) if (m.text) m.text = m.text.replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '…');
   return copy;
 }
 

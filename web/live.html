@@ -79,7 +79,7 @@ async function delegate(delegationId) {
     const r = await fetch('/api/agent', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, voice: true }) });
     if (r.status === 409) { await new Promise((ok) => setTimeout(ok, 1500)); continue; }
     const j = await r.json().catch(() => ({}));
-    reply = j.error ? `That didn't work: ${j.error}` : (j.reply || 'Done.');
+    reply = j.error ? `That didn't work: ${j.error}` : !r.ok ? `That didn't work (error ${r.status}).` : (j.reply || 'Done.');
     actions = j.actions || [];
     break;
   }

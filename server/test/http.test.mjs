@@ -41,6 +41,8 @@ test('pages are served and paths cannot escape the app folder', async () => {
   assert.equal((await get('/ledger')).status, 200);
   assert.equal((await get('/live')).status, 200);
   assert.ok([403, 404].includes((await get('/..%2f..%2fpackage.json')).status));
+  assert.equal((await get('/%E0%A4%A')).status, 400, 'a malformed escape is refused, not a crash');
+  assert.equal((await get('/api/health')).status, 200, 'and the server is still up');
 });
 
 test('a buy decision cannot become a watch', async () => {
