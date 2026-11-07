@@ -47,6 +47,7 @@ export type State = {
   decisions: Decision[]; policy: { version: number; rules: Rule[] }; policyVersions: PolicyVersion[];
   watchJobs: WatchJob[]; log: LogEntry[]; shelfDrafts: Draft[]; modelSpend: number; error?: string; approveUrl?: string;
   memories: Memory[]; diary: DiaryEntry[]; looks: Look[]; chat: ChatMessage[];
+  insights?: { days: number; liveCheckins: number; note: string; results: { itemId: string; name: string; usedDays: number; otherDays: number; diff: number | null; verdict: 'seems to help' | 'seems to hurt' | 'no clear effect' | 'not enough data' }[] };
   heard?: string; reply?: string; audioUrl?: string;
 };
 export type Weather = { date: string; uvMax: number; feelsMax: number; rainChance: number; humidity: number }[];

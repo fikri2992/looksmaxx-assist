@@ -13,6 +13,7 @@ const { weatherToday } = await import('./lib/weather.mjs');
 const { modelSpend } = await import('./lib/models.mjs');
 const { runTests } = await import('./lib/policy.mjs');
 const { converse, createLook } = await import('./lib/agent.mjs');
+const { whatWorks } = await import('./lib/insights.mjs');
 const { savePhoto, readPhoto } = await import('./lib/photos.mjs');
 const { transcribe, speak, spentToday } = await import('./lib/openai.mjs');
 
@@ -32,6 +33,7 @@ const view = () => ({
   policy: activePolicy(), policyVersions: db.policies.map(({ rules, tests, ...p }) => ({ ...p, ruleCount: rules.length, testCount: tests.length })),
   watchJobs: db.watchJobs, log: db.log.slice(0, 80), shelfDrafts: db.shelfDrafts, modelSpend: modelSpend(),
   memories: db.memories, diary: db.diary.slice(0, 60), looks: db.looks.slice(0, 30), chat: db.chat.slice(-40),
+  insights: whatWorks(db),
 });
 const withPhoto = async (fields) => {
   const { photo, ...rest } = fields || {};

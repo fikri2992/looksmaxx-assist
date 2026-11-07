@@ -5,6 +5,7 @@ import { decide, proposeRule, runOut } from './engine.mjs';
 import { makeImage } from './openai.mjs';
 import { readPhoto, savePhoto } from './photos.mjs';
 import { weatherToday } from './weather.mjs';
+import { whatWorks } from './insights.mjs';
 import { activePolicy, id, log, now } from './store.mjs';
 
 const MAX_STEPS = 6;
@@ -23,6 +24,7 @@ Reactions: ${JSON.stringify(db.reactions.map((r) => ({ item: r.item, note: r.not
 Owned (${items.length}): ${JSON.stringify(items)}
 Skin check-ins (newest first): ${JSON.stringify(skin)}
 Diary (last 7): ${JSON.stringify(db.diary.slice(0, 7).map((d) => ({ date: d.date, am: d.am, pm: d.pm, notes: d.notes, feel: d.feel })))}
+What seems to work on them (computed from diary and check-ins; a pattern, not proof): ${JSON.stringify(whatWorks(db).results.filter((r) => r.verdict !== 'not enough data').map((r) => `${r.name}: ${r.verdict} (${r.usedDays} vs ${r.otherDays} days)`))}
 Buying rules v${activePolicy().version}: buys alone under $${db.settings.rules.askAbove} an item and $${db.settings.rules.monthlyBudget} a month.`;
 }
 

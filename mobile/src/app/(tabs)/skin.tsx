@@ -64,6 +64,23 @@ export default function Skin() {
         </Card>
       </Section>
 
+      <Section title="What works on you" hint={state?.insights ? `${state.insights.note} Based on ${state.insights.days} days.` : 'Builds up from your diary and check-ins.'}>
+        <Card>
+          {state?.insights?.results.length ? state.insights.results.map((r) => {
+            const tone = r.verdict === 'seems to help' ? 'buy' : r.verdict === 'seems to hurt' ? 'veto' : 'textSecondary';
+            return (
+              <View key={r.itemId} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }} accessibilityLabel={`${r.name}: ${r.verdict}`}>
+                <View style={{ flex: 1 }}>
+                  <T variant="medium" numberOfLines={1}>{r.name}</T>
+                  <T variant="small" tone="textSecondary">{`Used ${r.usedDays} days, not used ${r.otherDays}`}</T>
+                </View>
+                <T variant="bold" tone={tone} style={{ fontSize: 14 }}>{r.verdict}</T>
+              </View>
+            );
+          }) : <T tone="textSecondary">Tick what you use each day and how your skin feels. After about a week, this shows which products seem to help and which seem to hurt.</T>}
+        </Card>
+      </Section>
+
       <Section title="Products" action={<Button kind="quiet" label="Add" icon="plus" onPress={() => router.push({ pathname: '/item', params: { category: 'skincare' } })} />}>
         {products.length ? products.map((p) => (
           <Pressable key={p.id} onPress={() => router.push({ pathname: '/item', params: { id: p.id } })} accessibilityRole="button">
