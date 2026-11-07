@@ -242,7 +242,13 @@ export async function followUp(job, original, seen, db, { weather = null, simula
 // Simulated decisions are labelled and can never be paid for.
 export async function runWatches(db, { simulate = {}, priceOf = livePrice, weather } = {}) {
   const fired = [];
-  if (weather === undefined) weather = await weatherToday(db.settings.location.lat, db.settings.location.lon).then((w) => w[0]).catch(() => null);
+  for (const [jobId, p] of Object.entries(simulate)) {
+    const job = db.watchJobs.find((j) => j.id === jobId && !j.firedAt);
+    const n = Number(p);
+    if (!job || !Number.isFinite(n) || n <= 0 || n > job.trigger.price) throw new Error(`A simulated price must be for an open watch, more than $0 and at most its target${job ? ` ($${job.trigger.price})` : ''}.`);
+  }
+  // Weather is only needed once something fires.
+  const weatherNow = async () => (weather !== undefined ? weather : (weather = await weatherToday(db.settings.location.lat, db.settings.location.lon).then((w) => w[0]).catch(() => null)));
   for (const job of db.watchJobs.filter((j) => !j.firedAt)) {
     if (alreadyBought(db, job.productId)) { Object.assign(job, { firedAt: now(), closed: 'already bought' }); log('watch', `Closed the watch on ${job.title}: it was already bought.`); continue; }
     const simulated = simulate[job.id] != null;
@@ -262,7 +268,7 @@ export async function runWatches(db, { simulate = {}, priceOf = livePrice, weath
     log('watch', `Watch fired: ${job.title} is $${price}${simulated ? ' (simulated for the demo)' : ''}, at or under $${job.trigger.price}. Deciding again.`);
     const original = db.decisions.find((d) => d.id === job.decisionId);
     if (!original?.product) { fired.push({ job }); continue; }
-    const d = await followUp(job, original, seen, db, { weather, simulated });
+    const d = await followUp(job, original, seen, db, { weather: await weatherNow(), simulated });
     db.decisions.unshift(d);
     job.followUpId = d.id;
     log(d.verdict, `${d.need.need} at $${price}: ${d.reasons.filter((r) => r.then === d.verdict).map((r) => r.because).join(' ')}`, { decisionId: d.id });
