@@ -54,6 +54,19 @@ export function summarize(rows) {
   return { days: prices.length, low: Math.min(...prices), high: Math.max(...prices), first: rows[0].at, last: rows.at(-1).at };
 }
 
+// Every watched product with its summary: the price observatory behind the ledger.
+export async function observatory() {
+  const map = await load();
+  const items = await watchlist();
+  return items.map((i) => {
+    const rows = map.get(i.id) || [];
+    const s = summarize(rows);
+    const now = rows.at(-1)?.price ?? null;
+    return { id: i.id, title: i.title, brand: i.brand, query: i.query, ...s, now, vsLow: s.low ? +(now / s.low).toFixed(3) : null,
+      moved: new Set(rows.map((r) => r.price)).size > 1, ourDays: rows.filter((r) => r.source === 'our-snapshot').length, history: rows.map((r) => r.price) };
+  });
+}
+
 // Products whose price actually moved: the honest demo material.
 export async function movers() {
   const map = await load();

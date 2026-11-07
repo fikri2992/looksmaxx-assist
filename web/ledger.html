@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shelfie Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Instrument+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
+<style>
+  :root { --bg:#F6F1EB; --surface:#FFFFFF; --el:#EFE7DE; --ink:#1E1A17; --muted:#6F655C; --line:#E3D9CE; --accent:#B5533C; --buy:#2F7D5B; --wait:#9A6A16; --veto:#7A3E6B; --ask:#3B5BA5; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#141110; --surface:#1E1A18; --el:#2A2421; --ink:#F3ECE6; --muted:#A89D93; --line:#3A322D; --accent:#E07A5F; --buy:#58B88E; --wait:#E0A93E; --veto:#C98BBE; --ask:#8FA8EC; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:400 15px/1.45 'Instrument Sans', system-ui, sans-serif; }
+  .wrap { max-width:1280px; margin:0 auto; padding:24px 16px 48px; }
+  header { display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px 24px; margin-bottom:18px; }
+  h1 { font:600 34px/1.1 Fraunces, Georgia, serif; margin:0; }
+  h2 { font:600 22px/1.2 Fraunces, Georgia, serif; margin:28px 0 4px; }
+  .muted { color:var(--muted); }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin:6px 0 4px; }
+  .tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; }
+  .tile b { display:block; font:600 28px/1.1 Fraunces, Georgia, serif; }
+  .grid { height:440px; width:100%; margin-top:10px; }
+  .stamp { font-weight:700; font-size:12px; letter-spacing:.06em; border:1.5px solid currentColor; border-radius:7px; padding:1px 7px; }
+  .v-buy { color:var(--buy); } .v-wait { color:var(--wait); } .v-veto { color:var(--veto); } .v-ask { color:var(--ask); }
+  .note { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-top:10px; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="muted" style="text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:500">Shelfie</div>
+      <h1>Decision ledger</h1>
+    </div>
+    <div class="muted" style="flex:1;min-width:260px">Every buy, wait or skip with its evidence: the price history behind it, the rule that fired, the rules version, and what PayPal did. Sandbox, simulated money.</div>
+  </header>
+  <div class="tiles" id="tiles"></div>
+
+  <h2>Decisions</h2>
+  <div class="muted">Skips first. Click a column to sort or filter.</div>
+  <div id="decisions" class="grid"></div>
+
+  <h2>Price observatory</h2>
+  <div class="muted">Channel3’s history saved at seed time, plus our own daily snapshots. A store’s “was” price is checked against this, not trusted.</div>
+  <div id="prices" class="grid"></div>
+
+  <h2>How the rules changed</h2>
+  <div class="muted">A rule the agent writes goes live only after every old and new test passes.</div>
+  <div id="rules" class="grid" style="height:260px"></div>
+  <div class="note muted" id="foot"></div>
+</div>
+<script>
+'use strict';
+const API = location.origin;
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+const theme = agGrid.themeQuartz.withParams({
+  backgroundColor: css('--surface'), foregroundColor: css('--ink'), headerBackgroundColor: css('--el'), borderColor: css('--line'),
+  accentColor: css('--accent'), fontFamily: 'Instrument Sans, system-ui, sans-serif', headerFontWeight: 700, rowHoverColor: css('--el'), wrapperBorderRadius: 14,
+});
+const money = (v) => (v == null ? '' : '$' + Number(v).toFixed(2));
+const LABEL = { buy: 'BUY', wait: 'WAIT', veto: 'SKIP', ask: 'YOUR CALL' };
+const ORDER = { veto: 0, wait: 1, buy: 2, ask: 3 };
+
+// Small inline price line, drawn per row so it needs no enterprise features.
+function spark(values, now) {
+  if (!values || values.length < 2) return '';
+  const w = 120, h = 26, all = now != null ? [...values, now] : values, lo = Math.min(...all), hi = Math.max(...all), span = hi - lo || 1;
+  const x = (i) => 2 + (i / (values.length - 1)) * (w - 4), y = (v) => h - 3 - ((v - lo) / span) * (h - 6);
+  const pts = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  return `<svg width="${w}" height="${h}" role="img" aria-label="Price from $${lo} to $${hi}"><polyline points="${pts}" fill="none" stroke="${css('--muted')}" stroke-width="1.5"/>${now != null ? `<circle cx="${x(values.length - 1)}" cy="${y(now)}" r="3" fill="${css('--accent')}"/>` : ''}</svg>`;
+}
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+async function main() {
+  const [state, obs] = await Promise.all([fetch(`${API}/api/state`).then((r) => r.json()), fetch(`${API}/api/prices/observatory`).then((r) => r.json())]);
+  const d = state.decisions;
+  const paid = d.filter((x) => x.paypal?.status === 'captured');
+  const tile = (n, label) => `<div class="tile"><b>${n}</b><span class="muted">${label}</span></div>`;
+  document.getElementById('tiles').innerHTML = [
+    tile(d.filter((x) => x.verdict === 'veto').length, 'skipped'), tile(d.filter((x) => x.verdict === 'wait').length, 'waiting'),
+    tile(d.filter((x) => x.verdict === 'buy').length, 'to buy'), tile(paid.length, `paid · ${money(paid.reduce((a, x) => a + (x.paypal.amount || 0), 0))}`),
+    tile(obs.filter((o) => o.moved).length + '/' + obs.length, 'products whose price moved'), tile('v' + state.policy.version, `rules · ${state.policy.rules.length} rules`),
+  ].join('');
+
+  agGrid.createGrid(document.getElementById('decisions'), {
+    theme, rowData: [...d].sort((a, b) => ORDER[a.verdict] - ORDER[b.verdict]),
+    defaultColDef: { sortable: true, resizable: true, filter: true },
+    columnDefs: [
+      { headerName: 'When', valueGetter: (p) => p.data.at.slice(0, 10), width: 110 },
+      { headerName: 'Verdict', field: 'verdict', width: 120, cellRenderer: (p) => `<span class="stamp v-${p.value}">${LABEL[p.value]}</span>` },
+      { headerName: 'Need', valueGetter: (p) => p.data.need.need, flex: 1, minWidth: 180 },
+      { headerName: 'Product', valueGetter: (p) => p.data.product?.title ?? p.data.note ?? '', flex: 1.4, minWidth: 220, tooltipValueGetter: (p) => p.value },
+      { headerName: 'Store', valueGetter: (p) => p.data.product?.store ?? '', width: 150 },
+      { headerName: 'Price', valueGetter: (p) => p.data.product?.price ?? null, valueFormatter: (p) => money(p.value), width: 100, type: 'numericColumn' },
+      { headerName: 'History', width: 150, sortable: false, filter: false, cellRenderer: (p) => spark(p.data.history?.rows?.map((r) => r.price), p.data.product?.price) },
+      { headerName: 'Days', valueGetter: (p) => p.data.history?.rows?.length ?? null, width: 85, type: 'numericColumn' },
+      { headerName: 'Why', valueGetter: (p) => (p.data.reasons.find((r) => r.then === p.data.verdict) ?? p.data.reasons[0])?.because, flex: 1.4, minWidth: 240, tooltipValueGetter: (p) => p.value },
+      { headerName: 'Rules', valueGetter: (p) => 'v' + p.data.policyVersion, width: 85 },
+      { headerName: 'PayPal', valueGetter: (p) => p.data.paypal?.status ?? '', width: 110 },
+      { headerName: 'Capture / auth', valueGetter: (p) => p.data.paypal?.captureId ?? p.data.paypal?.authId ?? '', width: 170 },
+    ],
+    rowHeight: 44, tooltipShowDelay: 300,
+  });
+
+  agGrid.createGrid(document.getElementById('prices'), {
+    theme, rowData: [...obs].sort((a, b) => (b.moved - a.moved) || (b.high / b.low) - (a.high / a.low)),
+    defaultColDef: { sortable: true, resizable: true, filter: true },
+    columnDefs: [
+      { headerName: 'Product', field: 'title', flex: 1.5, minWidth: 240, tooltipField: 'title' },
+      { headerName: 'Brand', field: 'brand', width: 150 },
+      { headerName: 'Searched as', field: 'query', width: 200 },
+      { headerName: 'History', width: 150, sortable: false, filter: false, cellRenderer: (p) => spark(p.data.history, p.data.now) },
+      { headerName: 'Days', field: 'days', width: 85, type: 'numericColumn' },
+      { headerName: 'Ours', field: 'ourDays', width: 80, type: 'numericColumn', headerTooltip: 'Days from our own daily snapshots' },
+      { headerName: 'Low', field: 'low', valueFormatter: (p) => money(p.value), width: 95, type: 'numericColumn' },
+      { headerName: 'High', field: 'high', valueFormatter: (p) => money(p.value), width: 95, type: 'numericColumn' },
+      { headerName: 'Now', field: 'now', valueFormatter: (p) => money(p.value), width: 95, type: 'numericColumn' },
+      { headerName: 'Now ÷ low', field: 'vsLow', width: 110, type: 'numericColumn', cellStyle: (p) => ({ color: p.value > 1.15 ? css('--wait') : p.value < 0.7 ? css('--veto') : css('--ink') }) },
+      { headerName: 'Moved', field: 'moved', width: 95, valueFormatter: (p) => (p.value ? 'yes' : '') },
+    ],
+    rowHeight: 40,
+  });
+
+  agGrid.createGrid(document.getElementById('rules'), {
+    theme, rowData: [...state.policyVersions].reverse(),
+    defaultColDef: { sortable: true, resizable: true },
+    columnDefs: [
+      { headerName: 'Version', valueGetter: (p) => 'v' + p.data.version, width: 100 },
+      { headerName: 'Written by', field: 'createdBy', width: 120 },
+      { headerName: 'Why', field: 'reason', flex: 1, minWidth: 260, tooltipField: 'reason' },
+      { headerName: 'Added rules', valueGetter: (p) => (p.data.diff?.added ?? []).join(', '), width: 220 },
+      { headerName: 'Tests', valueGetter: (p) => (p.data.testResults ? `${p.data.testResults.filter((t) => t.pass).length}/${p.data.testResults.length} passed` : `${p.data.testCount} tests`), width: 130 },
+      { headerName: 'Status', valueGetter: (p) => (p.data.activatedAt ? 'live' : 'rejected by its own tests'), width: 200, cellStyle: (p) => ({ color: p.value === 'live' ? css('--buy') : css('--veto') }) },
+    ],
+    rowHeight: 40,
+  });
+
+  document.getElementById('foot').innerHTML = `Products and prices from <a href="https://trychannel3.com" rel="noopener">Channel3</a>. Payments through PayPal sandbox: the agent authorizes at purchase time, re-checks the live price, then captures to the store or releases the hold. Grids by AG Grid Community. Demo data is labelled in the app.`;
+}
+main().catch((e) => { document.getElementById('tiles').textContent = `Couldn’t load the ledger: ${e.message}`; });
+</script>
+</body>
+</html>

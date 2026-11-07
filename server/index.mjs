@@ -8,7 +8,7 @@ await loadEnv();
 const { load, save, id, now, log, activePolicy, reset } = await import('./lib/store.mjs');
 const engine = await import('./lib/engine.mjs');
 const { createMandateOrder, authorizeApproved, captureAuthorization, voidAuthorization, refundCapture } = await import('./lib/paypal.mjs');
-const { movers, historyFor, summarize } = await import('./lib/prices.mjs');
+const { movers, historyFor, summarize, observatory } = await import('./lib/prices.mjs');
 const { weatherToday } = await import('./lib/weather.mjs');
 const { modelSpend } = await import('./lib/models.mjs');
 const { runTests } = await import('./lib/policy.mjs');
@@ -165,6 +165,7 @@ const routes = {
 
   // ----- Evidence -----
   'GET /api/prices/movers': async (req, res) => send(res, 200, await movers()),
+  'GET /api/prices/observatory': async (req, res) => send(res, 200, await observatory()),
   'GET /api/weather': async (req, res) => send(res, 200, await weatherToday(db.settings.location.lat, db.settings.location.lon)),
   'GET /api/policy/tests': async (req, res) => send(res, 200, runTests(activePolicy())),
   'POST /api/reset': async (req, res) => { reset(); await save(); send(res, 200, view()); },
