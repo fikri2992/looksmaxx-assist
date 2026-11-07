@@ -1,0 +1,15 @@
+{
+  "name": "shelfie",
+  "private": true,
+  "description": "Shelfie: an agent for your wardrobe, skincare and makeup that learns when not to buy.",
+  "license": "MIT",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server/index.mjs",
+    "seed": "node server/scripts/seed-demo.mjs",
+    "test": "node --test \"server/test/**/*.test.mjs\"",
+    "payment-gate": "node server/scripts/payment-gate.mjs",
+    "web": "npm --prefix mobile run web",
+    "apk": "bash scripts/build-apk.sh"
+  }
+}
