@@ -88,6 +88,23 @@ export async function makeImage(prompt, references = []) {
   return Buffer.from(j.data[0].b64_json, 'base64');
 }
 
+// GPT-Live voice session over WebRTC. The browser's SDP offer goes through here so the API key stays on the
+// server. Delegation is "client": when the voice model needs to act, the page hands the turn to our own agent
+// (same tools, memory and tested rules) and sends the result back to be spoken.
+// Live is billed per second; we charge a conservative LIVE_MINUTES up front and the page ends the call there.
+export const LIVE = { model: process.env.OPENAI_LIVE_MODEL || 'gpt-live-1', perMinute: 0.06, minutes: 5 };
+export async function createLiveSession(sdp, instructions) {
+  const estimate = LIVE.perMinute * LIVE.minutes;
+  await guard(estimate);
+  const res = await post('/live/sessions', {
+    session: { model: LIVE.model, instructions, delegation: { type: 'client', acknowledgement_delay_ms: 800 } },
+    transport: { type: 'webrtc', sdp },
+  });
+  const j = await res.json();
+  await charge(estimate, 'live');
+  return { id: j.session?.id, sdp: j.transport?.sdp, minutes: LIVE.minutes };
+}
+
 export async function transcribe(bytes, type = 'audio/m4a', seconds = 30) {
   await guard((seconds / 60) * PRICE.transcribePerMin);
   const form = new FormData();

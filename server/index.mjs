@@ -12,10 +12,10 @@ const { movers, historyFor, summarize, observatory } = await import('./lib/price
 const { weatherToday } = await import('./lib/weather.mjs');
 const { modelSpend } = await import('./lib/models.mjs');
 const { runTests } = await import('./lib/policy.mjs');
-const { converse, createLook, watchPrice } = await import('./lib/agent.mjs');
+const { converse, createLook, watchPrice, liveInstructions } = await import('./lib/agent.mjs');
 const { whatWorks } = await import('./lib/insights.mjs');
 const { savePhoto, readPhoto, prunePhotos } = await import('./lib/photos.mjs');
-const { transcribe, speak, spentToday } = await import('./lib/openai.mjs');
+const { transcribe, speak, spentToday, createLiveSession } = await import('./lib/openai.mjs');
 
 const port = Number(process.argv[2]) || Number(process.env.PORT) || 8095;
 const baseUrl = process.env.PUBLIC_URL || `http://localhost:${port}`;
@@ -72,7 +72,16 @@ const routes = {
   'DELETE /api/memories': async (req, res, body) => { db.memories = db.memories.filter((m) => m.id !== body.id); await save(); send(res, 200, view()); },
 
   // ----- The agent: text and voice -----
-  'POST /api/agent': (req, res, body) => exclusive(res, 'Thinking', async () => converse(String(body.text || '').slice(0, 2000), db)),
+  'POST /api/agent': (req, res, body) => exclusive(res, 'Thinking', async () => converse(String(body.text || '').slice(0, 2000), db, { voice: !!body.voice })),
+  // GPT-Live: exchange the browser's WebRTC offer for OpenAI's answer. The page then delegates turns to /api/agent.
+  'POST /api/live/session': async (req, res, body) => {
+    try {
+      if (!/^v=0/.test(String(body.sdp || ''))) return send(res, 400, { error: 'expected a WebRTC SDP offer' });
+      const s = await createLiveSession(body.sdp, await liveInstructions(db));
+      log('agent', 'Started a live voice call.'); await save();
+      send(res, 200, s);
+    } catch (e) { console.error(e); send(res, 502, { error: e.message }); }
+  },
   'POST /api/voice': (req, res, body) => exclusive(res, 'Listening', async () => {
     const audio = Buffer.from(String(body.audio || '').replace(/^data:[^;]+;base64,/, ''), 'base64');
     const heard = await transcribe(audio, body.mime || 'audio/m4a', Number(body.seconds) || 30);
@@ -225,6 +234,7 @@ async function serveApp(res, pathname) {
 createServer(async (req, res) => {
   const url = new URL(req.url, baseUrl);
   if (req.method === 'OPTIONS') return send(res, 204, '');
+  if (url.pathname === '/live') return send(res, 200, await readFile(path.join(repoRoot, 'web', 'live.html')).catch(() => 'live page missing'), 'text/html; charset=utf-8');
   if (url.pathname === '/ledger') return send(res, 200, await readFile(path.join(repoRoot, 'web', 'ledger.html')).catch(() => 'ledger not built yet'), 'text/html; charset=utf-8');
   if (url.pathname.startsWith('/photos/')) {
     try { const name = url.pathname.split('/').pop(); return send(res, 200, await readPhoto(name), { png: 'image/png', mp3: 'audio/mpeg' }[name.split('.').pop()] || 'image/jpeg'); }
