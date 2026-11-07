@@ -14,9 +14,13 @@ export default function Closet() {
   const { state, act } = useStore();
   const [type, setType] = useState<string>('all');
   const [picking, setPicking] = useState<string[]>([]);
-  const all = (state?.items ?? []).filter((i) => i.category === 'wardrobe');
-  const types = ['all', ...new Set(all.map((i) => i.type))];
-  const items = all.filter((i) => type === 'all' || i.type === type);
+  const wardrobe = (state?.items ?? []).filter((i) => i.category === 'wardrobe');
+  // Pieces you let go of leave the grid and the counts, but stay findable under their own chip.
+  const all = wardrobe.filter((i) => i.status !== 'finished');
+  const gone = wardrobe.filter((i) => i.status === 'finished');
+  const others = (state?.items ?? []).filter((i) => i.category === 'other');
+  const types = ['all', ...new Set(all.map((i) => i.type)), ...(gone.length ? ['let go'] : [])];
+  const items = type === 'let go' ? gone : all.filter((i) => type === 'all' || i.type === type);
   const looks = state?.looks ?? [];
   const neverWorn = all.filter((i) => !(i.wears ?? []).length).length;
   // Same colour and type, many times over: the agent uses this to say "skip".
@@ -56,6 +60,21 @@ export default function Closet() {
           </View>
         </>
       )}
+
+      <Section title="Other things" hint="Perfume, hair care, tools: anything that isn't clothes, skincare or makeup."
+        action={<Button kind="quiet" label="Add" icon="plus" onPress={() => router.push({ pathname: '/item', params: { category: 'other' } })} />}>
+        {others.length ? others.map((i) => (
+          <Pressable key={i.id} onPress={() => router.push({ pathname: '/item', params: { id: i.id } })} accessibilityRole="button" accessibilityLabel={`Edit ${i.name}`}
+            style={[styles.row, { backgroundColor: t.surface, borderColor: t.line }]}>
+            <Glyph category="other" size={36} />
+            <View style={{ flex: 1 }}>
+              <T variant="medium" numberOfLines={1}>{i.name}</T>
+              <T variant="small" tone="textSecondary">{[i.type, i.status === 'finished' ? 'gone' : null].filter(Boolean).join(' · ')}</T>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={t.textSecondary} />
+          </Pressable>
+        )) : <T variant="small" tone="textSecondary">Nothing here yet.</T>}
+      </Section>
 
       {looks.length ? (
         <Section title="Looks" hint="Generated from your own pieces. Uses their photos when you’ve added them.">
@@ -103,4 +122,5 @@ const styles = StyleSheet.create({
   tick: { position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   look: { width: 180, height: 270, borderRadius: Radius.lg },
   note: { flexDirection: 'row', gap: Spacing.two, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.md, padding: Spacing.two + 4 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.md, padding: Spacing.two + 4 },
 });
