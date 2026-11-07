@@ -6,7 +6,7 @@ import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Button, Card, Empty, Screen, Section, Sparkline, Stamp, T, type IconName } from '@/components/ui';
 import { Radius, Spacing, Type, type Verdict } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useStore, type Decision } from '@/lib/api';
+import { mediaUrl, useStore, type Decision } from '@/lib/api';
 
 const ORDER: Record<Verdict, number> = { veto: 0, wait: 1, buy: 2, ask: 3 };
 
@@ -44,6 +44,8 @@ export default function Today() {
         <Signal icon="timer-sand" label="Running low" value={String(low.length)} note={low[0]?.name ?? 'nothing soon'} />
       </ScrollView>
 
+      <OutfitCard />
+
       <Section title="Ask your agent" hint="It plans from what you own, then checks real prices.">
         <Card>
           <TextInput value={goal} onChangeText={setGoal} multiline accessibilityLabel="What you need" placeholderTextColor={t.textSecondary}
@@ -58,6 +60,47 @@ export default function Today() {
           : <Empty icon="shopping-outline" title="No decisions yet" text="Scan your shelf and take a check-in first, then ask your agent. It will often decide not to buy." />}
       </Section>
     </Screen>
+  );
+}
+
+// Today's outfit from the closet: the agent prefers pieces you haven't worn lately, for today's weather.
+function OutfitCard() {
+  const t = useTheme();
+  const { state, act } = useStore();
+  const o = state?.outfit;
+  const today = new Date().toISOString().slice(0, 10);
+  const fresh = o && o.day === today;
+  const pieces = fresh ? o.itemIds.map((id) => state?.items.find((i) => i.id === id)).filter(Boolean) : [];
+  const closetSize = state?.items.filter((i) => i.category === 'wardrobe').length ?? 0;
+  if (closetSize < 2) return null;
+  return (
+    <Section title="Today’s outfit" hint="From your own closet, for today’s weather.">
+      <Card>
+        {pieces.length ? (
+          <>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.two }}>
+              {pieces.map((p) => p && (
+                <View key={p.id} style={{ width: 96, gap: 4 }}>
+                  {p.photoId ? <Image source={mediaUrl(p.photoId)} style={styles.piece} contentFit="cover" accessibilityLabel={p.name} />
+                    : <View style={[styles.piece, { backgroundColor: t.backgroundElement, alignItems: 'center', justifyContent: 'center' }]}><MaterialCommunityIcons name="hanger" size={28} color={t.textSecondary} /></View>}
+                  <T variant="small" numberOfLines={2}>{p.name}</T>
+                </View>
+              ))}
+            </ScrollView>
+            <T variant="small" tone="textSecondary">{o?.reason}</T>
+            <View style={{ flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' }}>
+              <Button kind={o?.worn ? 'quiet' : 'primary'} icon="check" label={o?.worn ? 'Logged as worn' : 'I’m wearing this'} disabled={o?.worn} onPress={() => act('Logging', '/api/outfit/wear')} />
+              <Button kind="quiet" icon="refresh" label="Another" onPress={() => act('Picking today’s outfit', '/api/outfit')} />
+            </View>
+          </>
+        ) : (
+          <>
+            <T tone="textSecondary">{fresh && o?.reason ? o.reason : 'Let the agent pick from what you own.'}</T>
+            <Button icon="hanger" label="Pick today’s outfit" onPress={() => act('Picking today’s outfit', '/api/outfit')} />
+          </>
+        )}
+      </Card>
+    </Section>
   );
 }
 
@@ -154,5 +197,6 @@ const styles = StyleSheet.create({
   signal: { width: 138, borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.md, padding: Spacing.two + 4, gap: 2 },
   input: { minHeight: 72, borderWidth: 1, borderRadius: Radius.md, padding: Spacing.two + 4, fontFamily: Type.body, fontSize: 16, textAlignVertical: 'top' },
   thumb: { width: 64, height: 64, borderRadius: Radius.md },
+  piece: { width: 96, height: 128, borderRadius: Radius.md },
   trail: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: Spacing.two, gap: 6 },
 });

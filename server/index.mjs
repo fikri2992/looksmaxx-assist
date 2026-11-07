@@ -33,7 +33,7 @@ const view = () => ({
   policy: activePolicy(), policyVersions: db.policies.map(({ rules, tests, ...p }) => ({ ...p, ruleCount: rules.length, testCount: tests.length })),
   watchJobs: db.watchJobs, log: db.log.slice(0, 80), shelfDrafts: db.shelfDrafts, modelSpend: modelSpend(),
   memories: db.memories, diary: db.diary.slice(0, 60), looks: db.looks.slice(0, 30), chat: db.chat.slice(-40),
-  insights: whatWorks(db),
+  insights: whatWorks(db), outfit: db.outfit || null,
 });
 const withPhoto = async (fields) => {
   const { photo, ...rest } = fields || {};
@@ -80,6 +80,21 @@ const routes = {
     const audioUrl = `/photos/${await savePhoto(await speak(r.reply), 'mp3')}`;
     return { heard, ...r, audioUrl };
   }),
+  'POST /api/import': (req, res, body) => exclusive(res, 'Reading your receipt', async () => {
+    const { items, orderDate } = await engine.readReceipt(body.text || '');
+    db.shelfDrafts = items.map((it) => ({ ...it, id: id('drf'), keep: it.confidence >= 0.6, opened: orderDate, source: 'receipt, you confirmed' }));
+    log('import', `Read ${items.length} items from a pasted receipt. Nothing is saved until you confirm.`);
+  }),
+  'POST /api/outfit': (req, res) => exclusive(res, 'Picking today’s outfit', async () => {
+    const weather = await weatherToday(db.settings.location.lat, db.settings.location.lon).then((w) => w[0]).catch(() => null);
+    db.outfit = { day: now().slice(0, 10), weather, ...(await engine.outfitOfDay(db, weather)) };
+  }),
+  'POST /api/outfit/wear': async (req, res) => {
+    for (const iid of db.outfit?.itemIds || []) { const i = db.items.find((x) => x.id === iid); if (i) i.wears = [...(i.wears || []), now().slice(0, 10)]; }
+    if (db.outfit) db.outfit.worn = true;
+    log('memory', 'Logged today’s outfit as worn.');
+    await save(); send(res, 200, view());
+  },
   'POST /api/looks': (req, res, body) => exclusive(res, 'Styling a look', async () => { await createLook(db, body.itemIds || [], body.note || ''); }),
   'GET /api/openai/spend': async (req, res) => send(res, 200, { today: await spentToday(), cap: Number(process.env.OPENAI_DAILY_CAP || 10) }),
   'DELETE /api/items': async (req, res, body) => { db.items = db.items.filter((i) => i.id !== body.id); await save(); send(res, 200, view()); },
@@ -94,7 +109,7 @@ const routes = {
     // Crops are cut on the phone from the model's boxes, so each item gets its own photo without the full shelf leaving the device twice.
     for (const d of db.shelfDrafts.filter((x) => (body.ids || []).includes(x.id))) {
       const photoId = body.crops?.[d.id] ? await savePhoto(body.crops[d.id]) : null;
-      db.items.push({ id: id('itm'), createdAt: now(), status: 'active', source: 'photo, you confirmed', name: d.brand ? `${d.brand} ${d.name}` : d.name, brand: d.brand, category: d.category, type: d.type, color: d.color, opened: null, wears: [], photoId });
+      db.items.push({ id: id('itm'), createdAt: now(), status: 'active', source: d.source || 'photo, you confirmed', name: d.brand ? `${d.brand} ${d.name}` : d.name, brand: d.brand, category: d.category, type: d.type, color: d.color, opened: d.category === 'wardrobe' ? null : (d.opened || null), wears: [], photoId });
     }
     log('memory', `Saved ${(body.ids || []).length} items you confirmed.`);
     db.shelfDrafts = [];
