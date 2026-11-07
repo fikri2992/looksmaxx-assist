@@ -39,10 +39,17 @@ export function validatePolicy(policy) {
   return errors;
 }
 
+// "Contains vitamin c" must not match "Vitamin C-free": the word counts only where it isn't followed by "free".
+export function containsWord(text, word) {
+  if (typeof text !== 'string' || !word) return false;
+  const w = String(word).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`${w}(?![- ]?free)`, 'i').test(text);
+}
+
 function holds(c, facts) {
   const v = facts[c.fact];
   switch (c.op) {
-    case 'contains': return typeof v === 'string' && v.toLowerCase().includes(String(c.value).toLowerCase());
+    case 'contains': return containsWord(v, c.value);
     case 'eq': return v === c.value;
     case 'notEmpty': return typeof v === 'string' && v.length > 0;
     case 'empty': return !v;
