@@ -115,8 +115,9 @@ export async function createLiveSession(sdp, instructions) {
     const j = await res.json();
     return { id: j.session?.id, sdp: j.transport?.sdp, minutes: LIVE.minutes };
   } catch (e) {
-    // No call started: give the estimate back, but hold the window briefly so a failing client can't loop.
-    await charge(-estimate, 'live refund');
+    // No usable call: give the estimate back except the 15 seconds OpenAI bills when a session initializes
+    // (it may have, if only the reply was lost), and hold the window briefly so a failing client can't loop.
+    await charge(-(estimate - LIVE.perMinute * 0.25), 'live refund');
     liveUntil = Date.now() + 30_000;
     throw e;
   }
