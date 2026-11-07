@@ -167,6 +167,9 @@ const routes = {
     const d = db.decisions.find((x) => x.id === body.id);
     if (!d || !d.product) throw new Error('no such decision');
     if (d.verdict !== 'buy' && !body.override) throw new Error(`The policy said ${d.verdict}; approve it first.`);
+    if (d.trigger?.simulated) throw new Error('That price was simulated for the demo, so it can’t be bought.');
+    if (d.paypal) throw new Error('This decision already went through PayPal.');
+    if (engine.alreadyBought(db, d.product.id)) throw new Error('You already bought this product.');
     if (!db.settings.vaultId) {
       const { orderId, approveUrl } = await createMandateOrder({ description: d.product.title, amount: d.product.price, customId: d.id, payeeEmail: process.env.STORE_SANDBOX_EMAIL || undefined }, baseUrl);
       db.settings.pendingOrder = { orderId, decisionId: d.id };
@@ -215,7 +218,8 @@ const routes = {
   'GET /api/weather': async (req, res) => send(res, 200, await weatherToday(db.settings.location.lat, db.settings.location.lon)),
   'GET /api/policy/tests': async (req, res) => send(res, 200, runTests(activePolicy())),
   // On a public demo, reset goes back to the demo persona rather than an empty app.
-  'POST /api/reset': async (req, res) => { reset(process.env.PUBLIC_DEMO && hasDemo() ? await restoreDemo() : undefined); await save(); await prunePhotos(db); send(res, 200, view()); },
+  // Exclusive, so a reset can't land in the middle of a purchase or a look being made.
+  'POST /api/reset': (req, res) => exclusive(res, 'Resetting', async () => { reset(process.env.PUBLIC_DEMO && hasDemo() ? await restoreDemo() : undefined); await save(); await prunePhotos(db); }),
 };
 
 // The exported web app (npm run build:web) is served from the same origin, so judges need one URL and no install.

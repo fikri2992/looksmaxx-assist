@@ -17,6 +17,24 @@ async function fixture() {
   return { db, low };
 }
 
+test('a watch closes instead of buying again when the product was already bought', async () => {
+  const { db, low } = await fixture();
+  db.decisions.push({ id: 'd_paid', product: { id: PRODUCT.id }, paypal: { status: 'captured', captureId: 'C1' } });
+  db.settings.vaultId = 'V1';
+  assert.equal((await runWatches(db, { priceOf: async () => ({ price: low, store: 'x', live: true }), weather: null })).length, 0);
+  assert.equal(db.watchJobs[0].closed, 'already bought');
+});
+
+test('a simulated price must be positive and at most the target, and is never paid for', async () => {
+  const { db, low } = await fixture();
+  await assert.rejects(runWatches(db, { simulate: { job_1: 'x' }, weather: null }));
+  await assert.rejects(runWatches(db, { simulate: { job_1: -1 }, weather: null }));
+  await assert.rejects(runWatches(db, { simulate: { job_1: low + 1 }, weather: null }));
+  db.settings.vaultId = 'V1'; // even with PayPal approved, a simulated buy moves no money
+  await runWatches(db, { simulate: { job_1: low }, weather: null });
+  assert.equal(db.decisions[0].paypal, undefined);
+});
+
 test('a watch above its target does not fire', async () => {
   const { db, low } = await fixture();
   const fired = await runWatches(db, { priceOf: async () => low + 5, weather: null });

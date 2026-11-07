@@ -124,9 +124,11 @@ async function start() {
     stop();
   }
 }
-function end() { send({ type: 'session.close', event_id: eid() }); setTimeout(stop, 4000); status.textContent = 'Ending…'; }
+let stopTimer = null;
+function end() { send({ type: 'session.close', event_id: eid() }); clearTimeout(stopTimer); stopTimer = setTimeout(stop, 4000); status.textContent = 'Ending…'; }
 function stop() {
   clearTimeout(endTimer); endTimer = null;
+  clearTimeout(stopTimer); stopTimer = null; // a pending stop from the last call must not end the next one
   mic?.getTracks().forEach((t) => t.stop()); pc?.close();
   pc = dc = mic = null;
   talk.textContent = 'Start talking'; talk.classList.remove('live'); talk.disabled = false;
