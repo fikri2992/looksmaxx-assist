@@ -170,11 +170,13 @@ function baseFacts(db) {
 
 // Authorize at purchase time, re-check live, then capture or void. Our account never keeps the money:
 // the payee is the store (in sandbox, a demo store account standing in for the retailer).
+// Who gets paid: the store's sandbox account when one is set, otherwise our own sandbox merchant, labelled as such.
+export const payeeLabel = () => process.env.STORE_SANDBOX_EMAIL || 'Shelfie demo merchant (no store account set yet)';
+
 export async function execute(decision, db) {
-  const payeeEmail = process.env.STORE_SANDBOX_EMAIL;
-  if (!payeeEmail) throw new Error('STORE_SANDBOX_EMAIL is not set: there is no store account to pay.');
+  const payeeEmail = process.env.STORE_SANDBOX_EMAIL || undefined;
   const auth = await authorizeWithVault(db.settings.vaultId, { description: decision.product.title, amount: decision.product.price, customId: decision.id, payeeEmail });
-  decision.paypal = { orderId: auth.orderId, authId: auth.authId, authorizedAt: now(), authorized: decision.product.price, payee: payeeEmail };
+  decision.paypal = { orderId: auth.orderId, authId: auth.authId, authorizedAt: now(), authorized: decision.product.price, payee: payeeLabel() };
   log('authorize', `Authorized $${decision.product.price} for ${decision.product.title}. Running the final check.`, { decisionId: decision.id });
   // Final check, minutes later: live price and details, then the same policy again.
   const live = await productDetails(decision.product.id).catch(() => null);

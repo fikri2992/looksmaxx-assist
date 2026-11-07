@@ -177,7 +177,7 @@ function PayPalTrail({ d }: { d: Decision }) {
     ...(d.finalCheck ? [{ done: true, tone: d.finalCheck.verdict === 'buy' ? 'buy' as const : 'veto' as const, text: `Final check: live price $${d.finalCheck.livePrice}, ${d.finalCheck.verdict === 'buy' ? 'still a buy' : d.finalCheck.reasons[0]?.because ?? 'failed'}` }] : []),
     p.status === 'voided' ? { done: true, tone: 'veto', text: 'Hold released. Nothing was charged.' }
       : p.status === 'refunded' ? { done: true, tone: 'wait', text: `Refunded $${p.amount}` }
-      : { done: p.status === 'captured', tone: 'buy', text: `Paid $${p.amount} to the store` },
+      : { done: p.status === 'captured', tone: 'buy', text: `Paid $${p.amount} to ${p.payee ?? 'the store'}` },
   ];
   return (
     <View style={[styles.trail, { borderColor: t.line }]}>
