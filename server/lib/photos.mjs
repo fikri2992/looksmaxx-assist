@@ -5,7 +5,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { repoRoot } from './env.mjs';
 
-const dir = () => process.env.PHOTO_DIR || path.join(repoRoot, 'server', 'data', 'photos');
+export const dir = () => process.env.PHOTO_DIR || path.join(repoRoot, 'server', 'data', 'photos');
 
 export async function savePhoto(dataUrlOrBuffer, ext = 'jpg') {
   const bytes = Buffer.isBuffer(dataUrlOrBuffer) ? dataUrlOrBuffer : Buffer.from(String(dataUrlOrBuffer).replace(/^data:[^;]+;base64,/, ''), 'base64');

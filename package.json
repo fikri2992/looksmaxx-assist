@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node server/index.mjs",
     "seed": "node server/scripts/seed-demo.mjs",
+    "demo:bundle": "node server/scripts/demo-bundle.mjs",
     "test": "node --test \"server/test/**/*.test.mjs\"",
     "payment-gate": "node server/scripts/payment-gate.mjs",
     "web": "npm --prefix mobile run web",

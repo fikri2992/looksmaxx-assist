@@ -1,11 +1,14 @@
 // Our own price log (experiments/price-log): Channel3's ~30 days saved at seed time, plus one snapshot
 // per day since Nov 2 on days the logging PC runs. It counts for more than a store's "was" price.
+import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { repoRoot } from './env.mjs';
 import { priceHistory as channel3History } from './channel3.mjs';
 
-const dir = () => process.env.PRICE_LOG_DIR || path.join(repoRoot, 'experiments', 'price-log', 'data');
+// The live log on the logging PC; elsewhere (a fresh clone, a hosted demo) the copy in the demo bundle.
+const live = path.join(repoRoot, 'experiments', 'price-log', 'data');
+const dir = () => process.env.PRICE_LOG_DIR || (existsSync(live) ? live : path.join(repoRoot, 'server', 'demo', 'prices'));
 let cache = null;
 
 async function load() {
