@@ -27,7 +27,8 @@ export default function ItemScreen() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoErr, setPhotoErr] = useState<string | null>(null);
   const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
-  const validDate = !form.opened || /^\d{4}-\d{2}-\d{2}$/.test(form.opened);
+  // A real calendar day, same check as the server (2026-02-30 is refused there too).
+  const validDate = !form.opened || (/^\d{4}-\d{2}-\d{2}$/.test(form.opened) && !Number.isNaN(Date.parse(`${form.opened}T00:00:00Z`)) && new Date(`${form.opened}T00:00:00Z`).toISOString().startsWith(form.opened));
   const validShade = !form.shade || /^#[0-9a-f]{6}$/i.test(form.shade);
   const validPao = !form.paoMonths || (/^\d{1,2}$/.test(form.paoMonths) && Number(form.paoMonths) >= 1 && Number(form.paoMonths) <= 60);
   const shownPhoto = photo ?? mediaUrl(existing?.photoId);
@@ -75,7 +76,7 @@ export default function ItemScreen() {
         {form.category === 'makeup' ? field('Finish (optional)', 'finish', 'matte, satin, dewy…') : null}
         {!validShade ? <T variant="small" tone="veto">Use a hex colour like #C9A08A.</T> : null}
         {form.category !== 'wardrobe' ? field('Opened on (YYYY-MM-DD)', 'opened', '2026-10-20') : null}
-        {!validDate ? <T variant="small" tone="veto">Use the format 2026-10-20.</T> : null}
+        {!validDate ? <T variant="small" tone="veto">Use a real date in the format 2026-10-20.</T> : null}
         {/* The open-jar symbol on the pack, e.g. "12M". Empty uses a typical value for the type. */}
         {form.category === 'skincare' || form.category === 'makeup' ? field(`Months after opening, from the label${existing?.afterOpening && !existing.paoMonths ? ` (now assuming ${existing.afterOpening.months})` : ''}`, 'paoMonths', '12') : null}
         {!validPao ? <T variant="small" tone="veto">A number of months from 1 to 60, like the “12M” on the jar.</T> : null}
