@@ -20,12 +20,16 @@ const { transcribe, speak, spentToday, createLiveSession } = await import('./lib
 const port = Number(process.argv[2]) || Number(process.env.PORT) || 8095;
 const baseUrl = process.env.PUBLIC_URL || `http://localhost:${port}`;
 const { restoreDemoIfEmpty, restoreDemo, hasDemo } = await import('./lib/demo.mjs');
+const { masking, maskBrands } = await import('./lib/mask.mjs');
 if (await restoreDemoIfEmpty()) console.log('Started from the demo bundle in server/demo');
 const db = await load();
 
 const send = (res, status, body, type = 'application/json') => {
   res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store', 'access-control-allow-origin': '*', 'access-control-allow-headers': 'content-type', 'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS' });
-  res.end(type === 'application/json' ? JSON.stringify(body) : body);
+  if (type !== 'application/json') return res.end(body);
+  // Video mode swaps brand names and package photos for generic labels in every JSON response.
+  if (masking()) return maskBrands(body, db).then((b) => res.end(JSON.stringify(b)), () => res.end(JSON.stringify(body)));
+  res.end(JSON.stringify(body));
 };
 const bodyOf = async (req) => { let t = ''; for await (const c of req) t += c; return t ? JSON.parse(t) : {}; };
 const withRunOut = (i) => ({ ...i, ...engine.runOut(i) });

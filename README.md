@@ -64,6 +64,7 @@ A fresh clone starts from `server/demo`: the seeded persona, its photos, and a c
 
 - **Android:** set `EXPO_PUBLIC_API_URL=http://<your-pc-ip>:8095` in `mobile/.env.local`, then `npm run apk` (Windows-friendly: builds from a short path to avoid path-length limits). The APK lands in `dist/shelfie.apk`.
 - **Ledger:** http://localhost:8095/ledger
+- **Recording a demo video:** `MASK_BRANDS=1 npm start` swaps real product names, brands, store names and package photos for generic labels in every response, so the recording shows no third-party trademarks. Display only; the data stays real.
 - **Live voice:** http://localhost:8095/live (the microphone needs localhost or https, so on a phone use the hosted URL)
 - **PayPal:** the first purchase opens PayPal for one approval with a sandbox buyer. Set `STORE_SANDBOX_EMAIL` to a second sandbox Business account to pay a separate store; without it, the demo pays the app's own sandbox merchant and says so.
 
