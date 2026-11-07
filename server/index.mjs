@@ -182,6 +182,7 @@ const routes = {
     if (d.trigger?.simulated) throw new Error('That price was simulated for the demo, so it can’t be bought.');
     if (d.paypal) throw new Error('This decision already went through PayPal.');
     if (engine.alreadyBought(db, d.product.id)) throw new Error('You already bought this product.');
+    if (d.verdict !== 'buy') d.approvedBy = 'you'; // you said yes to an "ask"; the final check honours that
     if (!db.settings.vaultId) {
       const { orderId, approveUrl } = await createMandateOrder({ description: d.product.title, amount: d.product.price, customId: d.id, payeeEmail: process.env.STORE_SANDBOX_EMAIL || undefined }, baseUrl);
       db.settings.pendingOrder = { orderId, decisionId: d.id };
@@ -269,11 +270,13 @@ createServer(async (req, res) => {
       if (!pending || pending.orderId !== url.searchParams.get('token')) throw new Error('Unknown order returned from PayPal');
       const a = await authorizeApproved(pending.orderId);
       const d = db.decisions.find((x) => x.id === pending.decisionId);
-      const cap = await captureAuthorization(a.authId);
-      d.paypal = { orderId: a.orderId, authId: a.authId, captureId: cap.captureId, amount: d.product.price, status: 'captured', capturedAt: now(), payee: engine.payeeLabel(), firstApproval: true };
       db.settings.vaultId = a.vaultId;
       db.settings.pendingOrder = null;
-      log('mandate', a.vaultId ? `PayPal linked. The agent can buy alone within $${db.settings.rules.askAbove} an item and $${db.settings.rules.monthlyBudget} a month.` : 'Paid, but PayPal returned no saved method.');
+      d.paypal = { orderId: a.orderId, authId: a.authId, authorizedAt: now(), authorized: d.product.price, payee: engine.payeeLabel(), firstApproval: true };
+      log('mandate', a.vaultId ? `PayPal linked. The agent can buy alone within $${db.settings.rules.askAbove} an item and $${db.settings.rules.monthlyBudget} a month.` : 'Approved in PayPal, but it returned no saved method, so each purchase will need approval.');
+      log('authorize', `Authorized $${d.product.price} for ${d.product.title}. Running the final check.`, { decisionId: d.id });
+      // Same final check as every later purchase: live price and the rules, then capture or void.
+      await engine.settle(d, a.authId, db);
     } catch (e) { console.error(e); log('error', e.message); }
     await save();
     res.writeHead(302, { location: process.env.APP_RETURN_URL || '/' });
