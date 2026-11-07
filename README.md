@@ -1,19 +1,87 @@
-# Costume Buyer
+# Shelfie
 
-A costume buyer for crews who can't afford one. Give it a brief and a shoot date. The agent remembers what the team owns and what things really cost, buys at the right moment through PayPal, and returns what didn't make the cut before the deadline.
+**The shopping agent that learns when not to buy.**
 
-Built for the PayPal AI Hackathon. Early prototype: PayPal runs in sandbox only, and purchases go through demo shops mirroring real Channel3 listings.
+Shelfie knows what you already own across your wardrobe, skincare and makeup, how your skin has been, what reacted badly, and what things really cost over time. Before it spends a cent it checks all of that, and it often says no: "you own four black tops", "this has the ingredient that stung you", "it was cheaper last week". When it does buy, PayPal holds the money, the agent re-checks the live price, and only then pays the store.
 
-## Run
+Built for the PayPal AI Hackathon (Devpost, 2026). Android app plus a small Node server. PayPal runs in sandbox only.
 
-Needs Node 20+.
+## Why
 
-```sh
-cp .env.example .env.local
-node prototypes/costume-buyer/server.mjs
+- **People rebuy what they own.** 76% of US adults have bought something they already had because they forgot ([TopCashback, n=2,500, Jul 2026](https://www.prweb.com/releases/over-90-of-americans-are-paying-an-invisible-forgetfulness-tax-new-research-reveals-302837339.html)). A quarter of UK wardrobes hasn't been worn in a year ([WRAP, n>6,000](https://wrap.ngo/media-centre/press-releases/nations-wardrobes-hold-16-billion-items-unworn-clothes-people-open-new)).
+- **Skin reacts, and people forget why.** 71% of adults report some sensitive skin ([meta-analysis, ~51,800 people](https://pubmed.ncbi.nlm.nih.gov/31869523/)). After patch testing, patients forgot over 40% of their own allergens ([Mayo Clinic, n=757](https://mayoclinic.elsevierpure.com/en/publications/patients-perceptions-of-the-usefulness-and-outcome-of-patch-testi)).
+- **Discounts mislead, and AI advice is distrusted.** 92% of 227 Black Friday "deals" were the same price or cheaper at another time ([Which?](https://www.which.co.uk/policy-and-insight/article/nine-in-10-black-friday-deals-cheaper-or-same-price-at-other-times-of-the-year-which-finds-a4Z2J3u5lTI2)). 43% of beauty shoppers worry AI recommends what's paid for, not what fits ([Harris Poll, n=3,222](https://theharrispoll.com/articles/what-beauty-consumers-want-from-ai/)).
+
+Closet apps track what you own but never buy. Skincare apps log reactions but never stop a purchase. Shopping agents buy, but don't know what you own. Shelfie joins the three.
+
+## What it does
+
+| | |
+| --- | --- |
+| **Today** | The agent's recent calls, skips first, each with its evidence. Live UV and humidity. Today's outfit from your own closet. |
+| **Closet** | Photo grid, wear counts, "you own 4 black tops" warnings, and looks styled from your real pieces with gpt-image. |
+| **Skin** | Daily check-in, morning and evening products, how your skin feels, and **what works on you**: each product compared on days used versus not used. |
+| **Makeup** | Shade palette, open dates, the last look the agent saw. |
+| **Agent** | Chat or hold-to-talk. It acts through tools: adds items, logs the diary, remembers preferences, turns a reaction into a tested rule, styles looks, checks purchases. |
+| **Ledger** | `/ledger` on the server: every decision with its price history, rule and PayPal trail, a 112-product price observatory, and how the rules changed. Built with AG Grid. |
+
+Getting things in: one photo of a shelf or rail (the model reads it, you confirm), a pasted receipt or order email, or just telling the agent.
+
+## How the agent decides
+
+1. **Earn context first.** What you own and how long it will last, your skin timeline and diary, reactions, preferences, today's weather, and our own price history: Channel3's ~30 days saved at seed time plus a daily snapshot of 112 products since 2 Nov 2026.
+2. **Rules, not vibes.** Buy, wait, skip or ask comes from a small rule language stored as data (`server/lib/policy.mjs`). Models read photos and write text; they never decide money. When you report a reaction, the agent writes a new rule **with tests**, and it only goes live if every old and new test passes. Model-written code never runs.
+3. **Channel3 in layers.** Identify products (text or a product crop), details and variants, similar products when the first match fails a rule, and its price history as a second opinion.
+4. **PayPal as the decision's state machine.** You approve once in PayPal, which saves the method. For each purchase the agent **authorizes** at purchase time, re-checks the live price and the rules, then **captures** to the store or **voids** the hold. Refunds go through PayPal too. Every step's ID shows in the app and the ledger.
+
+```mermaid
+flowchart LR
+  A[Need] --> B[Owned? Skin? Reactions? Weather?]
+  B --> C[Channel3 search + price history]
+  C --> D{Tested rules}
+  D -- skip / wait / ask --> E[No money moves]
+  D -- buy --> F[PayPal authorize]
+  F --> G{Final check: live price + rules}
+  G -- pass --> H[Capture to store]
+  G -- fail --> I[Void hold]
 ```
 
-Fill in `.env.local`, then open http://localhost:8091.
+## Run it
+
+Needs Node 22+ and, for the APK, JDK 17 and the Android SDK.
+
+```sh
+cp .env.example .env.local      # PayPal sandbox keys, OpenAI key; Channel3 works without a key
+npm start                        # API server on http://localhost:8095
+npm run seed                     # demo persona, made by the real engine (labelled demo data)
+npm run build:web                # web app, then open http://localhost:8095
+npm test                         # rule language, engine and analysis tests
+```
+
+- **Android:** set `EXPO_PUBLIC_API_URL=http://<your-pc-ip>:8095` in `mobile/.env.local`, then `npm run apk` (Windows-friendly: builds from a short path to avoid path-length limits). The APK lands in `dist/shelfie.apk`.
+- **Ledger:** http://localhost:8095/ledger
+- **PayPal:** the first purchase opens PayPal for one approval with a sandbox buyer. Set `STORE_SANDBOX_EMAIL` to a second sandbox Business account to pay a separate store; without it, the demo pays the app's own sandbox merchant and says so.
+
+## Honest limits
+
+- PayPal sandbox only, simulated money. Delivery isn't part of the demo.
+- Demo data is labelled in the app. Face samples are generated images of a fictional person.
+- Skin readings describe appearance only, never diagnose, and can shift with lighting; the app says so. Selfies go only to the vision model and aren't stored; only the text reading is.
+- Product photos sent for search are crops, never faces.
+- Channel3 mostly covers US stores in USD.
+- In production, paying stores directly would use PayPal's marketplace onboarding rather than an app-held payee.
+
+## Built with
+
+PayPal Orders v2 (vault, authorize, capture, void, refund) · Channel3 · OpenAI GPT-6 Luna, gpt-image, speech · Open-Meteo · AG Grid Community · Expo / React Native.
+
+## Repo
+
+- `server/`: API, agent, rules, PayPal, Channel3, price log, tests
+- `mobile/`: the Expo app (Android and web)
+- `web/ledger.html`: AG Grid ledger
+- `scripts/`: APK and web builds
+- `prototypes/`: earlier experiments
 
 ## License
 
