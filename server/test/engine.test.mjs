@@ -41,3 +41,35 @@ test('reset keeps the same database object, so every module sees the reset', asy
   assert.equal(same, db);
   assert.equal(db.items.length, 0);
 });
+
+test('after-opening period: mascara expires fast, lipstick slow, clothes never', async () => {
+  const { afterOpening } = await import('../lib/engine.mjs');
+  const m = afterOpening({ category: 'makeup', type: 'mascara', opened: '2026-07-01' }, '2026-11-07');
+  assert.equal(m.past, true);
+  assert.equal(m.months, 3);
+  assert.equal(afterOpening({ category: 'makeup', type: 'lipstick', opened: '2026-10-08' }, '2026-11-07').past, false);
+  assert.equal(afterOpening({ category: 'makeup', type: 'mascara', opened: '2026-07-01', paoMonths: 6 }, '2026-11-07').past, false, 'the label wins');
+  assert.equal(afterOpening({ category: 'wardrobe', type: 'top', opened: '2026-01-01' }), null);
+  assert.equal(afterOpening({ category: 'makeup', type: 'mascara' }), null, 'unknown open date stays unknown');
+});
+
+test('a second open decision for the same kind of thing this week counts as already listed', async () => {
+  const { alreadyListed } = await import('../lib/engine.mjs');
+  const db = { decisions: [{ id: 'd1', at: new Date().toISOString(), verdict: 'buy', product: { id: 'p' }, need: { type: 'mascara', category: 'makeup' } }] };
+  const need = { type: 'mascara', category: 'makeup' };
+  assert.equal(alreadyListed(db, need), true);
+  assert.equal(alreadyListed(db, need, ['d1']), false, 'a decision never blocks itself or the one it follows up');
+  assert.equal(alreadyListed(db, { type: 'lipstick', category: 'makeup' }), false);
+  db.decisions[0].paypal = { status: 'voided' };
+  assert.equal(alreadyListed(db, need), false, 'a voided purchase is not on the list');
+});
+
+test('an impossible opened date reads as unknown instead of breaking the app', async () => {
+  const { isDay, afterOpening } = await import('../lib/engine.mjs');
+  assert.equal(isDay('2026-10-20'), true);
+  assert.equal(isDay('2026-13-45'), false);
+  assert.equal(isDay('2026-02-30'), false);
+  assert.equal(isDay('soon'), false);
+  assert.equal(runOut({ category: 'skincare', type: 'serum', opened: '2026-13-45' }).daysLeft, null);
+  assert.equal(afterOpening({ category: 'makeup', type: 'mascara', opened: '2026-13-45' }), null);
+});

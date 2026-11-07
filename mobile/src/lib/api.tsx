@@ -13,12 +13,13 @@ export type Item = {
   id: string; name: string; brand?: string | null; category: Category; type: string; color?: string | null;
   opened?: string | null; status: 'active' | 'low' | 'finished'; source: string; createdAt: string;
   daysLeft: number | null; life: number | null; basis: string;
-  photoId?: string | null; wears?: string[]; shade?: string | null; finish?: string | null; season?: string | null; occasion?: string | null;
+  afterOpening?: { months: number; useBy: string; daysToUseBy: number; past: boolean; basis: string } | null;
+  photoId?: string | null; paoMonths?: number | null; wears?: string[]; shade?: string | null; finish?: string | null; season?: string | null; occasion?: string | null;
 };
 export type Memory = { id: string; at: string; text: string; kind: string; source: string };
 export type DiaryEntry = { id: string; date: string; am?: string[]; pm?: string[]; feel?: string | null; notes?: string };
 export type Look = { id: string; at: string; itemIds: string[]; photoId: string; note: string; fromPhotos: number };
-export type ChatMessage = { id: string; at: string; role: 'user' | 'assistant'; text: string; voice?: boolean; actions?: { tool: string; summary: string; ok: boolean }[]; attachments?: { kind: 'look' | 'decision'; lookId?: string; photoId?: string; decisionId?: string }[] };
+export type ChatMessage = { id: string; at: string; role: 'user' | 'assistant'; text: string; voice?: boolean; actions?: { tool: string; summary: string; ok: boolean }[]; attachments?: { kind: 'look' | 'decision' | 'refund'; lookId?: string; photoId?: string; decisionId?: string; reason?: string }[] };
 export const mediaUrl = (id?: string | null) => (id ? `${API_URL}/photos/${id}` : null);
 export type SkinTrait = { trait: string; level: 'none' | 'mild' | 'noticeable'; where?: string | null; confidence?: number };
 export type CheckIn = {
@@ -35,10 +36,11 @@ export type Decision = {
   rejected: { title: string; why: string }[]; alternatives: { title: string; price: number; verdict: Verdict }[]; substitutedFor?: { reason: string };
   paypal?: { orderId?: string; authId?: string; captureId?: string; refundId?: string; status?: 'captured' | 'voided' | 'refunded'; amount?: number; authorized?: number; payee?: string; firstApproval?: boolean };
   finalCheck?: { at: string; livePrice: number; verdict: Verdict; reasons: Reason[] };
+  followsUp?: string; trigger?: { kind: 'watch'; jobId: string; price: number; target: number; simulated?: boolean };
 };
 export type PolicyVersion = { version: number; createdBy: 'seed' | 'agent'; reason: string; activatedAt: string | null; proposedAt?: string; ruleCount: number; testCount: number; diff?: { added: string[]; removed: string[]; changed: string[] }; testResults?: { name: string; pass: boolean; expect: string; got: string }[] | null; errors?: string[] };
 export type Rule = { id: string; then: Verdict; because: string; when: { fact: string; op: string; value?: unknown }[] };
-export type WatchJob = { id: string; createdAt: string; createdBy: string; title: string; trigger: { op: string; price: number }; everyHours: number; lastRun: string | null; firedAt: string | null };
+export type WatchJob = { id: string; createdAt: string; createdBy: string; productId: string; decisionId?: string; title: string; trigger: { op: string; price: number }; everyHours: number; lastRun: string | null; firedAt: string | null; lastPrice?: number | null; followUpId?: string };
 export type Draft = { id: string; name: string; brand: string | null; category: Category; type: string; color?: string | null; confidence: number; readable?: boolean; keep: boolean };
 export type LogEntry = { id: string; at: string; kind: string; text: string };
 export type State = {
@@ -47,6 +49,8 @@ export type State = {
   decisions: Decision[]; policy: { version: number; rules: Rule[] }; policyVersions: PolicyVersion[];
   watchJobs: WatchJob[]; log: LogEntry[]; shelfDrafts: Draft[]; modelSpend: number; error?: string; approveUrl?: string;
   memories: Memory[]; diary: DiaryEntry[]; looks: Look[]; chat: ChatMessage[];
+  outfit?: { day: string; itemIds: string[]; reason: string; worn?: boolean; weather?: { uvMax: number; feelsMax: number; rainChance: number } | null } | null;
+  insights?: { days: number; liveCheckins: number; note: string; results: { itemId: string; name: string; usedDays: number; otherDays: number; diff: number | null; verdict: 'seems to help' | 'seems to hurt' | 'no clear effect' | 'not enough data' }[] };
   heard?: string; reply?: string; audioUrl?: string;
 };
 export type Weather = { date: string; uvMax: number; feelsMax: number; rainChance: number; humidity: number }[];
@@ -96,7 +100,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   useEffect(() => {
-    refresh();
+    // First load from the server; this is syncing with an external system, which is what effects are for.
+    refresh(); // eslint-disable-line react-hooks/set-state-in-effect
     fetch(`${API_URL}/api/weather`).then((r) => r.json()).then(setWeather).catch(() => {});
   }, [refresh]);
 

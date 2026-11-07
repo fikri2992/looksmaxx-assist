@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { repoRoot } from './env.mjs';
 import { SEED_POLICY } from './policy.mjs';
 
-const file = () => process.env.DB_FILE || path.join(repoRoot, 'server', 'data', 'db.json');
+export const file = () => process.env.DB_FILE || path.join(repoRoot, 'server', 'data', 'db.json');
 
 export function emptyDb() {
   return {

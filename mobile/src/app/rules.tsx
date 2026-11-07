@@ -10,7 +10,7 @@ import { useStore, type PolicyVersion, type Rule } from '@/lib/api';
 
 // Plain words for the rule language, so anyone can read what the agent will do.
 const FACT_WORDS: Record<string, string> = {
-  'user.avoidHit': 'it contains something you reacted to', 'need.ownedCovering': 'you already own something that covers it',
+  'user.avoidHit': 'it contains something you reacted to', 'need.ownedCovering': 'you already own something that covers it', 'need.alreadyListed': 'one is already on your list this week',
   'price.vsLow': 'price ÷ its recent low', 'price.days': 'days of price history', 'need.daysLeft': 'days until you run out',
   'product.price': 'price', 'product.wasPrice': 'the “was” price', 'product.title': 'the product name', 'product.inStock': 'in stock',
   'weather.uvMax': 'today’s UV', 'weather.humidity': 'humidity', 'budget.monthLeft': 'budget left this month', 'rules.askAbove': 'your per-item limit', 'price.high': 'its recent high',
@@ -51,11 +51,15 @@ export default function Rules() {
           <Row icon={state?.settings.hasPaypal ? 'check-circle' : 'circle-outline'} tone={state?.settings.hasPaypal ? 'buy' : 'ask'} text={state?.settings.hasPaypal ? 'PayPal linked. The agent can buy within your rules.' : 'Not linked yet. The first purchase asks you to approve once in PayPal.'} />
           <Row icon="cash-lock" tone="ask" text={`Buys alone under $${state?.settings.rules.askAbove ?? 40} an item and $${state?.settings.rules.monthlyBudget ?? 120} a month. Anything else, it asks.`} />
           <Row icon="store-check-outline" tone="ask" text="It authorizes at purchase time, re-checks the live price, then pays the store or releases the hold. Shelfie never holds your money." />
+          {state?.settings.hasPaypal
+            ? <Button kind="quiet" icon="link-variant-off" label="Revoke the agent’s PayPal access" onPress={() => act('Revoking', '/api/paypal/revoke')} />
+            : <Button icon="shield-check-outline" label="Give your agent a PayPal mandate" onPress={() => act('Opening PayPal', '/api/paypal/mandate')} />}
+          {!state?.settings.hasPaypal ? <T variant="small" tone="textSecondary">PayPal shows these limits when you approve. Approving buys nothing.</T> : null}
         </Card>
       </Section>
 
       <Section title="How its rules changed" hint="Each version only went live after its tests passed.">
-        {versions.map((v) => <VersionCard key={v.version} v={v} />)}
+        {versions.map((v) => <VersionCard key={v.version} v={v} rules={state?.policy.rules ?? []} />)}
       </Section>
 
       <Section title={`Current rules (v${state?.policy.version ?? 1})`}>
@@ -67,8 +71,10 @@ export default function Rules() {
         {state?.watchJobs.length ? state.watchJobs.map((j) => (
           <Card key={j.id}>
             <T variant="medium" numberOfLines={2}>{j.title}</T>
-            <T variant="small" tone="textSecondary">{`Fires at $${j.trigger.price} or less · checks every ${j.everyHours}h · written by the agent ${new Date(j.createdAt).toLocaleDateString('en-GB')}`}</T>
-            <T variant="small" tone={j.firedAt ? 'buy' : 'textSecondary'}>{j.firedAt ? `Fired ${new Date(j.firedAt).toLocaleString('en-GB')}` : j.lastRun ? `Last checked ${new Date(j.lastRun).toLocaleString('en-GB')}` : 'Not run yet'}</T>
+            <T variant="small" tone="textSecondary">{`Fires at $${j.trigger.price} or less · checks every ${j.everyHours}h · ${j.createdBy === "you" ? "set by you" : "written by the agent"} ${new Date(j.createdAt).toLocaleDateString("en-GB")}`}</T>
+            <T variant="small" tone={j.firedAt ? 'buy' : 'textSecondary'}>{j.firedAt ? `Fired ${new Date(j.firedAt).toLocaleString('en-GB')}${j.lastPrice != null ? ` at $${j.lastPrice}` : ''}, then decided again` : j.lastRun ? `Last checked ${new Date(j.lastRun).toLocaleString('en-GB')}${j.lastPrice != null ? `: $${j.lastPrice}` : ''}` : 'Not run yet'}</T>
+            {/* Demo aid: stand in for a price drop. The follow-up decision is labelled simulated everywhere. */}
+            {!j.firedAt ? <Button kind="quiet" icon="flask-outline" label={`Demo: simulate a drop to $${j.trigger.price}`} onPress={() => act('Simulating a price drop', '/api/watch/run', { simulate: { [j.id]: j.trigger.price } })} /> : null}
           </Card>
         )) : <Card><T tone="textSecondary">None yet. They appear when the agent decides to wait for a better price.</T></Card>}
       </Section>
@@ -90,9 +96,14 @@ function Row({ icon, tone, text }: { icon: React.ComponentProps<typeof MaterialC
   return <View style={{ flexDirection: 'row', gap: Spacing.two }}><MaterialCommunityIcons name={icon} size={18} color={t[tone]} /><T variant="small" style={{ flex: 1 }}>{text}</T></View>;
 }
 
-function VersionCard({ v }: { v: PolicyVersion }) {
+function VersionCard({ v, rules }: { v: PolicyVersion; rules: Rule[] }) {
+  const t = useTheme();
+  const [open, setOpen] = useState(false);
   const passed = v.testResults?.filter((r) => r.pass).length;
   const failed = v.testResults?.filter((r) => !r.pass) ?? [];
+  // What the agent actually wrote: the rule as data (never code that runs) and the tests it had to pass.
+  const written = (v.diff?.added ?? []).map((id) => rules.find((r) => r.id === id)).filter((r): r is Rule => !!r);
+  const canOpen = v.createdBy === 'agent' && (written.length > 0 || !!v.testResults?.length);
   return (
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
@@ -104,6 +115,17 @@ function VersionCard({ v }: { v: PolicyVersion }) {
       {v.testResults ? <T variant="small" tone="textSecondary">{`${passed}/${v.testResults.length} tests passed`}</T> : <T variant="small" tone="textSecondary">{`${v.testCount} tests`}</T>}
       {failed.map((f) => <T key={f.name} variant="small" tone="veto">{`✗ ${f.name}: expected ${f.expect}, got ${f.got}`}</T>)}
       {v.errors?.map((e) => <T key={e} variant="small" tone="veto">{`✗ ${e}`}</T>)}
+      {canOpen ? <Button kind="quiet" icon={open ? 'chevron-up' : 'code-json'} label={open ? 'Hide what it wrote' : 'See what it wrote'} onPress={() => setOpen(!open)} /> : null}
+      {open ? (
+        <View style={{ gap: Spacing.two }}>
+          {written.map((r) => (
+            <View key={r.id} style={[styles.code, { backgroundColor: t.backgroundElement }]} accessibilityLabel={`Rule ${r.id} as written by the agent`}>
+              <T variant="mono" style={{ fontSize: 12.5 }}>{JSON.stringify({ id: r.id, when: r.when, then: r.then, because: r.because }, null, 2)}</T>
+            </View>
+          ))}
+          {v.testResults?.map((x) => <T key={x.name} variant="small" tone={x.pass ? 'buy' : 'veto'}>{`${x.pass ? '✓' : '✗'} ${x.name}: expects ${x.expect}${x.pass ? '' : `, got ${x.got}`}`}</T>)}
+        </View>
+      ) : null}
     </Card>
   );
 }
@@ -127,4 +149,5 @@ function RuleRow({ r }: { r: Rule }) {
 
 const styles = StyleSheet.create({
   input: { minHeight: 80, borderWidth: 1, borderRadius: Radius.md, padding: 12, fontFamily: Type.body, fontSize: 16, textAlignVertical: 'top' },
+  code: { borderRadius: Radius.md, padding: 12 },
 });

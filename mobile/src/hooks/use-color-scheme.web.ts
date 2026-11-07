@@ -8,7 +8,7 @@ export function useColorScheme() {
   const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
-    setHasHydrated(true);
+    setHasHydrated(true); // eslint-disable-line react-hooks/set-state-in-effect -- flips once after hydration so server and client first render match
   }, []);
 
   const colorScheme = useRNColorScheme();

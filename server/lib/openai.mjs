@@ -19,7 +19,10 @@ const ledgerFile = path.join(repoRoot, 'server', 'data', 'openai-spend.json');
 const today = () => new Date().toISOString().slice(0, 10);
 async function ledger() { return JSON.parse(await readFile(ledgerFile, 'utf8').catch(() => '{}')); }
 export async function spentToday() { return (await ledger())[today()] || 0; }
-async function charge(usd, what) {
+// Charges run one at a time so concurrent calls can't overwrite each other's ledger update.
+let chargeQueue = Promise.resolve();
+const charge = (usd, what) => (chargeQueue = chargeQueue.then(() => writeCharge(usd, what), () => writeCharge(usd, what)));
+async function writeCharge(usd, what) {
   const l = await ledger();
   l[today()] = +((l[today()] || 0) + usd).toFixed(5);
   await mkdir(path.dirname(ledgerFile), { recursive: true });
@@ -75,14 +78,49 @@ export async function makeImage(prompt, references = []) {
     form.append('model', OPENAI.image);
     form.append('prompt', prompt);
     form.append('size', '1024x1536');
+    form.append('output_format', 'jpeg');
+    form.append('output_compression', '80');
     for (const [i, r] of references.slice(0, 6).entries()) form.append('image[]', new Blob([r.bytes], { type: r.type || 'image/jpeg' }), `ref-${i}.jpg`);
     res = await post('/images/edits', form, { form: true });
   } else {
-    res = await post('/images/generations', { model: OPENAI.image, prompt, size: '1024x1536' });
+    // JPEG keeps photos around 100 KB instead of 2 MB PNGs, which matters on phones.
+    res = await post('/images/generations', { model: OPENAI.image, prompt, size: '1024x1536', output_format: 'jpeg', output_compression: 80 });
   }
   const j = await res.json();
   await charge(PRICE.image, 'image');
   return Buffer.from(j.data[0].b64_json, 'base64');
+}
+
+// GPT-Live voice session over WebRTC. The browser's SDP offer goes through here so the API key stays on the
+// server. Delegation is "client": when the voice model needs to act, the page hands the turn to our own agent
+// (same tools, memory and tested rules) and sends the result back to be spoken.
+// Live is billed per second; we charge a conservative LIVE_MINUTES up front and the page ends the call there.
+export const LIVE = { model: process.env.OPENAI_LIVE_MODEL || 'gpt-live-1', perMinute: 0.06, minutes: 5 };
+// The API has no server-side hang-up, so the page ends each call; to bound what a misbehaving client can cost,
+// only one call may start per LIVE.minutes window, the estimate is charged before the call opens, and
+// LIVE_ENABLED=0 turns calls off (the public demo default).
+let liveUntil = 0;
+export async function createLiveSession(sdp, instructions) {
+  if (process.env.LIVE_ENABLED === '0') throw new Error('Live calls are turned off on this server.');
+  if (Date.now() < liveUntil) throw new Error('A live call is already running. Try again in a few minutes.');
+  const estimate = LIVE.perMinute * LIVE.minutes;
+  await guard(estimate);
+  liveUntil = Date.now() + LIVE.minutes * 60_000;
+  await charge(estimate, 'live');
+  try {
+    const res = await post('/live/sessions', {
+      session: { model: LIVE.model, instructions, delegation: { type: 'client', acknowledgement_delay_ms: 800 } },
+      transport: { type: 'webrtc', sdp },
+    });
+    const j = await res.json();
+    return { id: j.session?.id, sdp: j.transport?.sdp, minutes: LIVE.minutes };
+  } catch (e) {
+    // No usable call: give the estimate back except the 15 seconds OpenAI bills when a session initializes
+    // (it may have, if only the reply was lost), and hold the window briefly so a failing client can't loop.
+    await charge(-(estimate - LIVE.perMinute * 0.25), 'live refund');
+    liveUntil = Date.now() + 30_000;
+    throw e;
+  }
 }
 
 export async function transcribe(bytes, type = 'audio/m4a', seconds = 30) {

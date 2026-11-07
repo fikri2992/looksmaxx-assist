@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shelfie Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Instrument+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#F6F1EB; --surface:#FFFFFF; --el:#EFE7DE; --ink:#1E1A17; --muted:#6F655C; --line:#E3D9CE; --accent:#B5533C; --buy:#2F7D5B; --veto:#7A3E6B; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#141110; --surface:#1E1A18; --el:#2A2421; --ink:#F3ECE6; --muted:#A89D93; --line:#3A322D; --accent:#E07A5F; --buy:#58B88E; --veto:#C98BBE; } }
+  :root[data-theme="dark"] { --bg:#141110; --surface:#1E1A18; --el:#2A2421; --ink:#F3ECE6; --muted:#A89D93; --line:#3A322D; --accent:#E07A5F; --buy:#58B88E; --veto:#C98BBE; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:400 16px/1.45 'Instrument Sans', system-ui, sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 18px; min-height: 100vh; }
+  header a { color: var(--muted); text-decoration: none; font-size: 14px; }
+  h1 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 34px; line-height: 1.1; margin: 6px 0 4px; }
+  .sub { color: var(--muted); margin: 0; }
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 0 6px; }
+  #talk { width: 132px; height: 132px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font: 700 17px 'Instrument Sans', sans-serif; cursor: pointer; box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); transition: transform .15s; }
+  #talk:active { transform: scale(.97); }
+  #talk.live { animation: pulse 1.8s infinite; background: var(--ink); color: var(--bg); }
+  #talk:disabled { opacity: .6; cursor: default; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 70% { box-shadow: 0 0 0 22px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+  #status { color: var(--muted); font-size: 14px; min-height: 20px; text-align: center; }
+  #log { display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 86%; padding: 10px 14px; border-radius: 18px; white-space: pre-wrap; }
+  .you { align-self: flex-end; background: var(--ink); color: var(--bg); border-bottom-right-radius: 4px; }
+  .them { align-self: flex-start; background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .agent { align-self: flex-start; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 13px; border: 1px solid var(--buy); border-radius: 999px; padding: 2px 9px; }
+  .chip.bad { border-color: var(--veto); }
+  .note { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 12px; margin-top: auto; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <a href="/agent">← Back to Shelfie</a>
+    <h1>Talk to your agent</h1>
+    <p class="sub">A live voice call. When it needs your closet, skin, money or memory, it hands the turn to the same agent and tested rules as the app.</p>
+  </header>
+  <div class="stage">
+    <button id="talk" aria-live="polite">Start talking</button>
+    <div id="status" role="status"></div>
+  </div>
+  <section id="log" aria-label="Conversation"></section>
+  <p class="note">GPT-Live 1 handles the conversation. Actions run on the Shelfie server: the voice model never buys or refunds on its own. Calls end after a few minutes to keep costs down.</p>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const talk = $('talk'), status = $('status'), log = $('log');
+let pc = null, dc = null, mic = null, endTimer = null;
+let heard = '';           // what the person said since the last delegation
+let line = null, lineWho = null;
+
+function say(who, text) {
+  if (lineWho !== who || !line) { line = document.createElement('div'); line.className = `msg ${who}`; log.append(line); lineWho = who; }
+  line.textContent += text;
+  line.scrollIntoView({ block: 'end', behavior: 'smooth' });
+}
+function chips(actions) {
+  if (!actions?.length) return;
+  const row = document.createElement('div'); row.className = 'agent';
+  for (const a of actions) { const c = document.createElement('span'); c.className = `chip${a.ok ? '' : ' bad'}`; c.textContent = `${a.ok ? '✓' : '✕'} ${a.summary}`; row.append(c); }
+  log.append(row); line = null; lineWho = null;
+}
+const send = (event) => { if (dc?.readyState === 'open') dc.send(JSON.stringify(event)); };
+const eid = () => `evt_${Math.random().toString(36).slice(2, 10)}`;
+
+// The voice model asked for help: give the person's words to our agent, then hand back what it did.
+async function delegate(delegationId) {
+  const text = heard.trim() || 'Continue with what I just asked.';
+  heard = '';
+  status.textContent = 'Your agent is working on it…';
+  let reply = '', actions = [];
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const r = await fetch('/api/agent', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, voice: true }) });
+    if (r.status === 409) { await new Promise((ok) => setTimeout(ok, 1500)); continue; }
+    const j = await r.json().catch(() => ({}));
+    reply = j.error ? `That didn't work: ${j.error}` : !r.ok ? `That didn't work (error ${r.status}).` : (j.reply || 'Done.');
+    actions = j.actions || [];
+    break;
+  }
+  if (!reply) reply = 'The agent is busy with something else. Ask me again in a moment.';
+  chips(actions);
+  send({ type: 'session.commentary.append', event_id: eid(), delegation_id: delegationId, content: reply.slice(0, 1500) });
+  status.textContent = 'Listening';
+}
+
+function onEvent(e) {
+  switch (e.type) {
+    case 'session.started': status.textContent = 'Listening. Say hello.'; break;
+    case 'session.input_transcript.delta': heard += e.delta || ''; say('you', e.delta || ''); break;
+    case 'session.output_transcript.delta': say('them', e.delta || ''); break;
+    case 'session.delegation.created': delegate(e.delegation?.id).catch((err) => { status.textContent = err.message; }); break;
+    case 'session.closed': stop(); break;
+    case 'error': status.textContent = e.error?.message || 'Something went wrong.'; break;
+  }
+}
+
+async function start() {
+  talk.disabled = true; status.textContent = 'Asking for the microphone…';
+  try {
+    mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+    pc = new RTCPeerConnection();
+    const audio = new Audio(); audio.autoplay = true;
+    pc.ontrack = (ev) => { audio.srcObject = ev.streams[0]; };
+    for (const t of mic.getTracks()) pc.addTrack(t, mic);
+    dc = pc.createDataChannel('oai-events');
+    dc.onmessage = (m) => { try { onEvent(JSON.parse(m.data)); } catch {} };
+    await pc.setLocalDescription(await pc.createOffer());
+    status.textContent = 'Connecting…';
+    await new Promise((ok) => { if (pc.iceGatheringState === 'complete') return ok(); const t = setTimeout(ok, 10000); pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === 'complete') { clearTimeout(t); ok(); } }; });
+    const r = await fetch('/api/live/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sdp: pc.localDescription.sdp }) });
+    const j = await r.json();
+    if (!r.ok || !j.sdp) throw new Error(j.error || 'Could not start the call.');
+    await pc.setRemoteDescription({ type: 'answer', sdp: j.sdp });
+    talk.textContent = 'End call'; talk.classList.add('live'); talk.disabled = false;
+    endTimer = setTimeout(end, (j.minutes || 5) * 60_000);
+  } catch (err) {
+    status.textContent = err.name === 'NotAllowedError' ? 'Microphone permission was refused.' : err.message;
+    stop();
+  }
+}
+let stopTimer = null;
+function end() { send({ type: 'session.close', event_id: eid() }); clearTimeout(stopTimer); stopTimer = setTimeout(stop, 4000); status.textContent = 'Ending…'; }
+function stop() {
+  clearTimeout(endTimer); endTimer = null;
+  clearTimeout(stopTimer); stopTimer = null; // a pending stop from the last call must not end the next one
+  mic?.getTracks().forEach((t) => t.stop()); pc?.close();
+  pc = dc = mic = null;
+  talk.textContent = 'Start talking'; talk.classList.remove('live'); talk.disabled = false;
+  if (status.textContent === 'Ending…' || status.textContent.startsWith('Listening')) status.textContent = 'Call ended.';
+}
+talk.addEventListener('click', () => (pc ? end() : start()));
+if (!window.isSecureContext) status.textContent = 'Live voice needs https or localhost for the microphone.';
+</script>
+</body>
+</html>

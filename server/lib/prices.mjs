@@ -1,11 +1,14 @@
 // Our own price log (experiments/price-log): Channel3's ~30 days saved at seed time, plus one snapshot
 // per day since Nov 2 on days the logging PC runs. It counts for more than a store's "was" price.
+import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { repoRoot } from './env.mjs';
 import { priceHistory as channel3History } from './channel3.mjs';
 
-const dir = () => process.env.PRICE_LOG_DIR || path.join(repoRoot, 'experiments', 'price-log', 'data');
+// The live log on the logging PC; elsewhere (a fresh clone, a hosted demo) the copy in the demo bundle.
+const live = path.join(repoRoot, 'experiments', 'price-log', 'data');
+const dir = () => process.env.PRICE_LOG_DIR || (existsSync(live) ? live : path.join(repoRoot, 'server', 'demo', 'prices'));
 let cache = null;
 
 async function load() {
@@ -52,6 +55,19 @@ export function summarize(rows) {
   const prices = rows.map((r) => r.price);
   if (!prices.length) return { days: 0, low: null, high: null };
   return { days: prices.length, low: Math.min(...prices), high: Math.max(...prices), first: rows[0].at, last: rows.at(-1).at };
+}
+
+// Every watched product with its summary: the price observatory behind the ledger.
+export async function observatory() {
+  const map = await load();
+  const items = await watchlist();
+  return items.map((i) => {
+    const rows = map.get(i.id) || [];
+    const s = summarize(rows);
+    const now = rows.at(-1)?.price ?? null;
+    return { id: i.id, title: i.title, brand: i.brand, query: i.query, ...s, now, vsLow: s.low ? +(now / s.low).toFixed(3) : null,
+      moved: new Set(rows.map((r) => r.price)).size > 1, ourDays: rows.filter((r) => r.source === 'our-snapshot').length, history: rows.map((r) => r.price) };
+  });
 }
 
 // Products whose price actually moved: the honest demo material.

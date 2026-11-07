@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, TextInput, View } from 'react-native';
 
 import { Banner, Button, Card, Glyph, Screen, Section, T } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -16,7 +16,13 @@ export default function Scan() {
   const drafts = state?.shelfDrafts ?? [];
   const [keep, setKeep] = useState<Record<string, boolean>>({});
   const [err, setErr] = useState<string | null>(null);
-  useEffect(() => { setKeep(Object.fromEntries(drafts.map((d) => [d.id, d.keep]))); }, [drafts.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [receipt, setReceipt] = useState('');
+  // New drafts arrived: start from the model's keep/drop guess, adjusted during render.
+  const [seenDrafts, setSeenDrafts] = useState(-1);
+  if (seenDrafts !== drafts.length) {
+    setSeenDrafts(drafts.length);
+    setKeep(Object.fromEntries(drafts.map((d) => [d.id, d.keep])));
+  }
 
   const scan = async (source: 'camera' | 'library') => {
     setErr(null);
@@ -43,6 +49,15 @@ export default function Scan() {
             <Button kind="quiet" label="Choose from photos" icon="image-outline" onPress={() => scan('library')} />
           </View>
           <T variant="small" tone="textSecondary">The photo goes to an AI model to be read, and Shelfie doesn’t keep it.</T>
+        </Card>
+      ) : null}
+      {!drafts.length ? (
+        <Card style={{ gap: Spacing.two }}>
+          <T variant="display">Or paste a receipt</T>
+          <T tone="textSecondary">Paste an order confirmation email or receipt. The agent lists what you bought, with the date, and you confirm.</T>
+          <TextInput value={receipt} onChangeText={setReceipt} multiline placeholder="Order #123 · Hydrating gel moisturizer 50ml $18 …" placeholderTextColor={t.textSecondary} accessibilityLabel="Receipt text"
+            style={{ minHeight: 96, borderWidth: 1, borderColor: t.line, borderRadius: 14, padding: 12, color: t.text, backgroundColor: t.background, textAlignVertical: 'top' }} />
+          <Button kind="quiet" label="Read this receipt" icon="receipt" disabled={receipt.trim().length < 10} onPress={async () => { await act('Reading your receipt', '/api/import', { text: receipt }); setReceipt(''); }} />
         </Card>
       ) : (
         <Section title={`Found ${drafts.length}`} hint="Tap to keep or drop. Unreadable or unsure items start unticked.">

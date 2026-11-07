@@ -60,6 +60,28 @@ export async function createMandateOrder(purchase, baseUrl) {
   return { orderId: order.id, approveUrl: order.links?.find((l) => ['payer-action', 'approve'].includes(l.rel))?.href };
 }
 
+// The mandate, without a purchase: the buyer approves a saved PayPal method once, seeing the agent's rules as
+// the description. Vault v3 setup token → approval → payment token. Revoking deletes the token.
+export async function createMandate(description, baseUrl) {
+  const st = await pp('/v3/vault/setup-tokens', 'POST', {
+    payment_source: { paypal: {
+      description: description.slice(0, 127), usage_type: 'MERCHANT', customer_type: 'CONSUMER', usage_pattern: 'IMMEDIATE',
+      experience_context: { return_url: `${baseUrl}/paypal/mandate-return`, cancel_url: `${baseUrl}/paypal/cancel`, shipping_preference: 'NO_SHIPPING' },
+    } },
+  }, randomUUID());
+  return { setupTokenId: st.id, approveUrl: st.links?.find((l) => l.rel === 'approve')?.href };
+}
+
+export async function finishMandate(setupTokenId) {
+  const t = await pp('/v3/vault/payment-tokens', 'POST', { payment_source: { token: { id: setupTokenId, type: 'SETUP_TOKEN' } } }, randomUUID());
+  return { vaultId: t.id, customerId: t.customer?.id || null };
+}
+
+export async function revokeMandate(vaultId) {
+  await pp(`/v3/vault/payment-tokens/${vaultId}`, 'DELETE');
+  return { revoked: true };
+}
+
 export async function authorizeApproved(orderId) {
   const order = await pp(`/v2/checkout/orders/${orderId}/authorize`, 'POST', {}, randomUUID());
   const auth = authOf(order);

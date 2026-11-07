@@ -1,0 +1,33 @@
+# Render blueprint for the hosted demo: one web service runs the API and serves the web app and /ledger.
+# It starts from the demo bundle in server/demo, so judges see the seeded persona with nothing to set up.
+# Secrets are entered in the Render dashboard (sync: false); nothing secret lives in this file.
+services:
+  - type: web
+    name: shelfie
+    runtime: node
+    plan: free
+    buildCommand: npm --prefix mobile ci && npm run build:web
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      # Reset returns to the demo persona instead of an empty app.
+      - key: PUBLIC_DEMO
+        value: "1"
+      # Lower model budget for a public URL; the server refuses calls past it.
+      - key: OPENAI_DAILY_CAP
+        value: "2"
+      # Live voice calls can't be hung up from the server, so they're off on a public URL unless you turn them on.
+      - key: LIVE_ENABLED
+        value: "0"
+      - key: PUBLIC_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PAYPAL_SANDBOX_CLIENT_ID
+        sync: false
+      - key: PAYPAL_SANDBOX_CLIENT_SECRET
+        sync: false
+      - key: STORE_SANDBOX_EMAIL
+        sync: false
