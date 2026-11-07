@@ -71,8 +71,10 @@ export default function Rules() {
         {state?.watchJobs.length ? state.watchJobs.map((j) => (
           <Card key={j.id}>
             <T variant="medium" numberOfLines={2}>{j.title}</T>
-            <T variant="small" tone="textSecondary">{`Fires at $${j.trigger.price} or less · checks every ${j.everyHours}h · written by the agent ${new Date(j.createdAt).toLocaleDateString('en-GB')}`}</T>
-            <T variant="small" tone={j.firedAt ? 'buy' : 'textSecondary'}>{j.firedAt ? `Fired ${new Date(j.firedAt).toLocaleString('en-GB')}` : j.lastRun ? `Last checked ${new Date(j.lastRun).toLocaleString('en-GB')}` : 'Not run yet'}</T>
+            <T variant="small" tone="textSecondary">{`Fires at $${j.trigger.price} or less · checks every ${j.everyHours}h · ${j.createdBy === "you" ? "set by you" : "written by the agent"} ${new Date(j.createdAt).toLocaleDateString("en-GB")}`}</T>
+            <T variant="small" tone={j.firedAt ? 'buy' : 'textSecondary'}>{j.firedAt ? `Fired ${new Date(j.firedAt).toLocaleString('en-GB')}${j.lastPrice != null ? ` at $${j.lastPrice}` : ''}, then decided again` : j.lastRun ? `Last checked ${new Date(j.lastRun).toLocaleString('en-GB')}${j.lastPrice != null ? `: $${j.lastPrice}` : ''}` : 'Not run yet'}</T>
+            {/* Demo aid: stand in for a price drop. The follow-up decision is labelled simulated everywhere. */}
+            {!j.firedAt ? <Button kind="quiet" icon="flask-outline" label={`Demo: simulate a drop to $${j.trigger.price}`} onPress={() => act('Simulating a price drop', '/api/watch/run', { simulate: { [j.id]: j.trigger.price } })} /> : null}
           </Card>
         )) : <Card><T tone="textSecondary">None yet. They appear when the agent decides to wait for a better price.</T></Card>}
       </Section>

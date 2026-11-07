@@ -33,6 +33,7 @@ Getting things in: one photo of a shelf or rail (the model reads it, you confirm
 2. **Rules, not vibes.** Buy, wait, skip or ask comes from a small rule language stored as data (`server/lib/policy.mjs`). Models read photos and write text; they never decide money. When you report a reaction, the agent writes a new rule **with tests**, and it only goes live if every old and new test passes. Model-written code never runs.
 3. **Channel3 in layers.** Identify products (text or a product crop), details and variants, similar products when the first match fails a rule, and its price history as a second opinion.
 4. **PayPal as the decision's state machine.** You approve once in PayPal, which saves the method. For each purchase the agent **authorizes** at purchase time, re-checks the live price and the rules, then **captures** to the store or **voids** the hold. Refunds go through PayPal too. Every step's ID shows in the app and the ledger.
+5. **Waiting is an action.** A "wait" or "ask" can become a price watch, written by the agent or set by you. Every few hours the server checks live prices; when one fires, the same tested rules run again on the new price with no model call. If they say buy and PayPal is approved, it buys through the same authorize, final check, capture or void. Refunds can only be prepared by the agent; your tap moves the money.
 
 ```mermaid
 flowchart LR

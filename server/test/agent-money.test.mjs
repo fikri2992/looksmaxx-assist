@@ -32,6 +32,13 @@ test('watch defaults to the 30-day low and does not duplicate', async () => {
   assert.equal(watchPrice(db, 'nope').ok, false);
 });
 
+test('a product already at its low is watched for 10% under today', async () => {
+  const db = await fixture();
+  db.decisions.push({ id: 'd_low', verdict: 'ask', product: { id: 'p4', title: 'Powder', price: 20 }, facts: { 'price.low': 20 } });
+  watchPrice(db, 'd_low');
+  assert.equal(db.watchJobs.at(-1).trigger.price, 18);
+});
+
 test('refund is only prepared, never executed, and only for captured money', async () => {
   const db = await fixture();
   const r = prepareRefund(db, 'd_cap', 'Too greasy');

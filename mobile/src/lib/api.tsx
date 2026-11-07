@@ -35,10 +35,11 @@ export type Decision = {
   rejected: { title: string; why: string }[]; alternatives: { title: string; price: number; verdict: Verdict }[]; substitutedFor?: { reason: string };
   paypal?: { orderId?: string; authId?: string; captureId?: string; refundId?: string; status?: 'captured' | 'voided' | 'refunded'; amount?: number; authorized?: number; payee?: string; firstApproval?: boolean };
   finalCheck?: { at: string; livePrice: number; verdict: Verdict; reasons: Reason[] };
+  followsUp?: string; trigger?: { kind: 'watch'; jobId: string; price: number; target: number; simulated?: boolean };
 };
 export type PolicyVersion = { version: number; createdBy: 'seed' | 'agent'; reason: string; activatedAt: string | null; proposedAt?: string; ruleCount: number; testCount: number; diff?: { added: string[]; removed: string[]; changed: string[] }; testResults?: { name: string; pass: boolean; expect: string; got: string }[] | null; errors?: string[] };
 export type Rule = { id: string; then: Verdict; because: string; when: { fact: string; op: string; value?: unknown }[] };
-export type WatchJob = { id: string; createdAt: string; createdBy: string; title: string; trigger: { op: string; price: number }; everyHours: number; lastRun: string | null; firedAt: string | null };
+export type WatchJob = { id: string; createdAt: string; createdBy: string; productId: string; decisionId?: string; title: string; trigger: { op: string; price: number }; everyHours: number; lastRun: string | null; firedAt: string | null; lastPrice?: number | null; followUpId?: string };
 export type Draft = { id: string; name: string; brand: string | null; category: Category; type: string; color?: string | null; confidence: number; readable?: boolean; keep: boolean };
 export type LogEntry = { id: string; at: string; kind: string; text: string };
 export type State = {
