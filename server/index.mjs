@@ -62,7 +62,14 @@ const routes = {
 
   // ----- Items (CRUD across categories; category is a field, not a separate app) -----
   'POST /api/items': async (req, res, body) => { const item = { id: id('itm'), createdAt: now(), status: 'active', source: 'manual', wears: [], ...(await withPhoto(body.item)) }; db.items.push(item); log('memory', `Added ${item.name}.`); await save(); send(res, 200, view()); },
-  'PATCH /api/items': async (req, res, body) => { const item = db.items.find((i) => i.id === body.id); if (!item) return send(res, 404, { error: 'no such item' }); Object.assign(item, await withPhoto(body.patch), { updatedAt: now() }); await save(); send(res, 200, view()); },
+  // Only fields a person edits; ids, sources, photo ids and wear history can't be overwritten from outside.
+  'PATCH /api/items': async (req, res, body) => {
+    const item = db.items.find((i) => i.id === body.id); if (!item) return send(res, 404, { error: 'no such item' });
+    const EDITABLE = ['name', 'brand', 'category', 'type', 'color', 'shade', 'finish', 'season', 'occasion', 'opened', 'status', 'notes', 'paoMonths', 'photo'];
+    const patch = Object.fromEntries(Object.entries(body.patch || {}).filter(([k]) => EDITABLE.includes(k)));
+    if (patch.paoMonths != null && !(Number(patch.paoMonths) >= 1 && Number(patch.paoMonths) <= 60)) return send(res, 400, { error: 'months after opening must be 1 to 60' });
+    Object.assign(item, await withPhoto(patch), { updatedAt: now() }); await save(); send(res, 200, view());
+  },
   'POST /api/items/wear': async (req, res, body) => { const item = db.items.find((i) => i.id === body.id); if (!item) return send(res, 404, { error: 'no such item' }); item.wears = [...(item.wears || []), body.date || now().slice(0, 10)]; await save(); send(res, 200, view()); },
 
   // ----- Skin diary and memory -----

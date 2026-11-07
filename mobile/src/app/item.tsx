@@ -22,12 +22,14 @@ export default function ItemScreen() {
     name: existing?.name ?? '', brand: existing?.brand ?? '', category: existing?.category ?? category ?? 'skincare' as Category,
     type: existing?.type ?? '', color: existing?.color ?? '', shade: existing?.shade ?? '', finish: existing?.finish ?? '',
     opened: existing?.opened ?? '', status: existing?.status ?? 'active' as Item['status'],
+    paoMonths: existing?.paoMonths ? String(existing.paoMonths) : '',
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoErr, setPhotoErr] = useState<string | null>(null);
   const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
   const validDate = !form.opened || /^\d{4}-\d{2}-\d{2}$/.test(form.opened);
   const validShade = !form.shade || /^#[0-9a-f]{6}$/i.test(form.shade);
+  const validPao = !form.paoMonths || (/^\d{1,2}$/.test(form.paoMonths) && Number(form.paoMonths) >= 1 && Number(form.paoMonths) <= 60);
   const shownPhoto = photo ?? mediaUrl(existing?.photoId);
 
   const choose = async (source: 'camera' | 'library') => {
@@ -35,7 +37,7 @@ export default function ItemScreen() {
     try { const p = await pickPhoto(source); if (p) setPhoto(p); } catch (e) { setPhotoErr(e instanceof Error ? e.message : String(e)); }
   };
   const save = async () => {
-    const item = { ...form, brand: form.brand || null, color: form.color || null, shade: form.shade || null, finish: form.finish || null, opened: form.opened || null, ...(photo ? { photo } : {}) };
+    const item = { ...form, brand: form.brand || null, color: form.color || null, shade: form.shade || null, finish: form.finish || null, opened: form.opened || null, paoMonths: validPao && form.paoMonths ? Number(form.paoMonths) : null, ...(photo ? { photo } : {}) };
     await (existing ? act('Saving', '/api/items', { id: existing.id, patch: item }, 'PATCH') : act('Saving', '/api/items', { item }));
     router.back();
   };
@@ -74,11 +76,14 @@ export default function ItemScreen() {
         {!validShade ? <T variant="small" tone="veto">Use a hex colour like #C9A08A.</T> : null}
         {form.category !== 'wardrobe' ? field('Opened on (YYYY-MM-DD)', 'opened', '2026-10-20') : null}
         {!validDate ? <T variant="small" tone="veto">Use the format 2026-10-20.</T> : null}
+        {/* The open-jar symbol on the pack, e.g. "12M". Empty uses a typical value for the type. */}
+        {form.category === 'skincare' || form.category === 'makeup' ? field(`Months after opening, from the label${existing?.afterOpening && !existing.paoMonths ? ` (now assuming ${existing.afterOpening.months})` : ''}`, 'paoMonths', '12') : null}
+        {!validPao ? <T variant="small" tone="veto">A number of months from 1 to 60, like the “12M” on the jar.</T> : null}
         <View style={{ gap: 6 }}>
           <T variant="small" tone="textSecondary">Status</T>
           <View style={styles.row}>{STATUS.map((s) => <Chip key={s} label={STATUS_LABEL[s]} selected={form.status === s} onPress={() => set('status')(s)} />)}</View>
         </View>
-        <Button label="Save" icon="check" disabled={!form.name || !form.type || !validDate || !validShade} onPress={save} />
+        <Button label="Save" icon="check" disabled={!form.name || !form.type || !validDate || !validShade || !validPao} onPress={save} />
         {existing?.category === 'wardrobe' ? <Button kind="quiet" label={`Wore it today (${existing.wears?.length ?? 0} so far)`} icon="check-circle-outline" onPress={() => act('Logging', '/api/items/wear', { id: existing.id })} /> : null}
         {existing ? <Button kind="quiet" label="Delete" icon="trash-can-outline" onPress={async () => { await act('Deleting', '/api/items', { id: existing.id }, 'DELETE'); router.back(); }} /> : null}
       </Card>

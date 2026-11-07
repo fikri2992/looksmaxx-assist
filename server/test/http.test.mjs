@@ -68,6 +68,19 @@ test('live calls can be switched off', async () => {
   assert.match((await r.json()).error, /turned off/);
 });
 
+test('editing an item takes only editable fields, and the label period moves its use-by', async () => {
+  const s = await (await get('/api/state')).json();
+  const m = s.items.find((i) => i.type === 'mascara') ?? s.items.find((i) => i.afterOpening);
+  if (!m) return;
+  const patch = (body) => fetch(`${base}/api/items`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const after = await (await patch({ id: m.id, patch: { paoMonths: 60, id: 'hijack', source: 'x' } })).json();
+  const edited = after.items.find((i) => i.id === m.id);
+  assert.ok(edited, 'the id was not overwritten');
+  assert.notEqual(edited.source, 'x');
+  assert.equal(edited.afterOpening.months, 60);
+  assert.equal((await patch({ id: m.id, patch: { paoMonths: 999 } })).status, 400);
+});
+
 test('on a public demo, reset returns to the persona', async () => {
   await post('/api/items', { item: { name: 'Junk', category: 'other', type: 'x' } });
   const s = await (await post('/api/reset')).json();
