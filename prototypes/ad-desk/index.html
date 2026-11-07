@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Slotted</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#f4eee2; --card:#fffaf1; --ink:#17140f; --muted:#6b6256; --line:#dcd2bf; --hot:#f2460f; --go:#0d7a4f; --warn:#a56100; --soft:#ebe3d3; --display:'Bricolage Grotesque', system-ui, sans-serif; --mono:'DM Mono', ui-monospace, monospace; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:500 15px/1.45 'Instrument Sans', system-ui, sans-serif; }
+  .wrap { max-width:1320px; margin:0 auto; padding:0 24px 40px; }
+  a { color:inherit; }
+  .mono { font-family:var(--mono); }
+  .muted { color:var(--muted); }
+  .small { font-size:13px; }
+
+  header.top { display:flex; flex-wrap:wrap; align-items:center; gap:8px 18px; padding:16px 0 12px; border-bottom:2px solid var(--ink); }
+  .logo { font:800 28px/1 var(--display); letter-spacing:-.03em; }
+  .logo i { font-style:normal; color:var(--hot); }
+  .tagline { color:var(--muted); font-size:14px; }
+  .meta { margin-left:auto; display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; font-size:13px; }
+  .meta b { font:500 13px var(--mono); }
+  .meta .ok { color:var(--go); }
+
+  button { font:600 14px/1.2 'Instrument Sans', system-ui, sans-serif; color:var(--ink); background:transparent; border:1.5px solid var(--ink); border-radius:999px; padding:7px 14px; cursor:pointer; }
+  button:hover:not(:disabled) { background:var(--ink); color:var(--paper); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  button:focus-visible, input:focus-visible, .pub:focus-visible, a:focus-visible { outline:3px solid var(--hot); outline-offset:2px; }
+  button.big { background:var(--hot); border-color:var(--hot); color:#fff; font:700 18px/1 var(--display); padding:14px 26px; }
+  button.big:hover:not(:disabled) { background:var(--ink); border-color:var(--ink); }
+  button.pay { background:var(--go); border-color:var(--go); color:#fff; width:100%; font:700 16px/1.1 var(--display); padding:13px 16px; }
+  button.pay:hover:not(:disabled) { background:var(--ink); border-color:var(--ink); }
+  button.mini { padding:3px 10px; font-size:12px; font-weight:600; }
+
+  .brief { padding:26px 0 22px; }
+  .sentence { font:700 clamp(22px,2.6vw,33px)/1.28 var(--display); letter-spacing:-.025em; margin:0; }
+  .sentence input { font:inherit; letter-spacing:inherit; color:var(--hot); background:transparent; border:0; border-bottom:3px solid var(--ink); padding:0 2px; min-width:2ch; max-width:100%; }
+  .sentence input[type=number] { -moz-appearance:textfield; appearance:textfield; }
+  .sentence input::-webkit-outer-spin-button, .sentence input::-webkit-inner-spin-button { appearance:none; margin:0; }
+  .launch { display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-top:16px; }
+  #status { font-size:15px; display:flex; align-items:center; gap:8px; min-height:22px; }
+  #status.on::before { content:''; width:10px; height:10px; border-radius:50%; background:var(--hot); animation:pulse 1s infinite; flex:none; }
+  @keyframes pulse { 50% { opacity:.25; } }
+  #errorBox { color:#b3261e; font-weight:600; }
+
+  .desk { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,.95fr); gap:0; border-top:2px solid var(--ink); }
+  .col { padding:16px 18px 18px; border-right:1px solid var(--line); min-width:0; }
+  .col:first-child { padding-left:0; }
+  .col:last-child { border-right:0; padding-right:0; }
+  h2 { font:800 20px/1.1 var(--display); letter-spacing:-.02em; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 12px; }
+
+  .pub { display:grid; grid-template-columns:38px minmax(0,1fr) auto; gap:10px; width:100%; padding:11px 8px; border:0; border-top:1px solid var(--line); border-radius:0; text-align:left; background:transparent; color:var(--ink); font:inherit; cursor:pointer; }
+  .pub:hover:not(:disabled) { background:var(--soft); color:var(--ink); }
+  .pub.sel { background:var(--card); box-shadow:inset 3px 0 0 var(--hot); }
+  .pub.skip .pname, .pub.skip .pask { color:var(--muted); }
+  .av { width:38px; height:38px; display:grid; place-items:center; color:#fff; font:800 15px var(--display); border-radius:4px; }
+  .pname { font-weight:700; line-height:1.2; }
+  .pkind { font-size:12px; color:var(--muted); }
+  .pask { font:500 15px var(--mono); text-align:right; }
+  .why { grid-column:2 / 4; font-size:13px; color:var(--muted); line-height:1.3; }
+  .verdict { font:700 11px/1 var(--mono); letter-spacing:.06em; padding:3px 6px; border-radius:3px; display:inline-block; margin-top:4px; }
+  .v-talk { background:var(--ink); color:var(--paper); }
+  .v-skip { background:var(--soft); color:var(--muted); }
+  .v-mem { background:#ffe3d8; color:#9b2c06; margin-left:4px; }
+  svg.spark { display:block; margin-left:auto; margin-top:4px; }
+
+  .room-head { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 12px; }
+  .room-title { font:800 28px/1.05 var(--display); letter-spacing:-.03em; margin:0; }
+  .meter { position:relative; height:88px; margin:14px 4px 10px; }
+  .track { position:absolute; left:0; right:0; top:42px; height:6px; background:var(--soft); }
+  .gap { position:absolute; top:42px; height:6px; background:var(--hot); transition:left .5s ease, width .5s ease; }
+  .mark { position:absolute; transform:translateX(-50%); text-align:center; white-space:nowrap; transition:left .5s ease; font-size:12px; line-height:1.15; }
+  .mark b { display:block; font:500 19px/1.1 var(--mono); }
+  .mark.top { bottom:50px; }
+  .mark.top::after { content:''; display:block; width:2px; height:10px; background:currentColor; margin:2px auto 0; }
+  .mark.low { top:44px; color:var(--muted); }
+  .mark.low::before { content:''; display:block; width:1.5px; height:12px; background:currentColor; margin:0 auto 2px; }
+  .mark.low b { font-size:13px; }
+  .mark.you { color:var(--go); } .mark.them { color:var(--hot); }
+
+  .chat { display:flex; flex-direction:column; gap:7px; max-height:360px; overflow:auto; padding:2px 2px 6px; }
+  .msg { max-width:84%; padding:8px 12px; border-radius:12px; font-size:14.5px; line-height:1.32; }
+  .msg .p { font:500 14px var(--mono); display:block; margin-bottom:1px; }
+  .m-buyer { align-self:flex-start; background:var(--ink); color:var(--paper); border-bottom-left-radius:2px; }
+  .m-seller { align-self:flex-end; background:var(--card); border:1.5px solid var(--ink); border-bottom-right-radius:2px; }
+  .m-system { align-self:center; max-width:94%; font-size:13px; font-weight:600; color:#9b2c06; text-align:center; padding:3px 6px; }
+  .legend { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin:8px 2px 4px; }
+
+  .empty { border:2px dashed var(--line); padding:26px 22px; color:var(--muted); }
+  .empty strong { display:block; font:700 20px/1.2 var(--display); color:var(--ink); margin-bottom:4px; }
+
+  .steps { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); margin:16px 0 6px; list-style:none; padding:0; counter-reset:s; }
+  .steps li { border-top:5px solid var(--soft); padding-top:6px; font-size:12.5px; font-weight:600; color:var(--muted); margin-right:3px; line-height:1.2; }
+  .steps li.done { border-color:var(--go); color:var(--ink); }
+  .steps li.now { border-color:var(--hot); color:var(--ink); }
+  .steps li.bad { border-color:#b3261e; color:#b3261e; }
+  .proof { font-size:13.5px; margin:8px 0 0; }
+  .proof li { margin:2px 0; }
+  .proof ul { margin:4px 0 0; padding-left:18px; }
+  .ids { font:400 11.5px var(--mono); color:var(--muted); overflow-wrap:anywhere; margin-top:6px; }
+
+  .budget { height:14px; background:var(--soft); display:flex; margin:8px 0 4px; }
+  .budget i { display:block; height:100%; transition:width .4s; }
+  .row { display:flex; justify-content:space-between; gap:10px; }
+  .deal { padding:9px 0; border-top:1px solid var(--line); display:block; width:100%; text-align:left; background:none; border-left:0; border-right:0; border-bottom:0; border-radius:0; color:var(--ink); font:inherit; cursor:pointer; }
+  .deal:hover:not(:disabled) { background:var(--soft); color:var(--ink); }
+  .st { font:700 11px var(--mono); letter-spacing:.05em; }
+  .st-paid { color:var(--go); } .st-held,.st-agreed,.st-waiting,.st-fixing,.st-talking { color:var(--warn); } .st-voided,.st-no_deal { color:var(--muted); }
+  .saved { color:var(--go); font-weight:700; }
+  .mem { margin-top:18px; }
+  .mem h2 { color:var(--hot); }
+  .lesson { padding:8px 0; border-top:1px solid var(--line); font-size:14px; line-height:1.32; }
+  .log { font-size:12.5px; color:var(--muted); max-height:190px; overflow:auto; margin-top:6px; }
+  .log div { padding:3px 0; }
+  details summary { cursor:pointer; font-weight:600; font-size:13px; margin-top:14px; }
+  .disclaimer { border-top:1px solid var(--line); margin-top:22px; padding-top:10px; font-size:12.5px; color:var(--muted); }
+
+  @media (max-width:1040px) {
+    .desk { grid-template-columns:minmax(0,1fr); }
+    .col, .col:first-child, .col:last-child { padding:16px 0; border-right:0; border-bottom:1px solid var(--line); }
+    #room { order:-1; }
+    .meta { margin-left:0; }
+  }
+  @media (max-width:560px) { .wrap { padding:0 16px 30px; } .steps li { font-size:11px; } .room-title { font-size:24px; } }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">Slot<i>ted</i></div>
+    <div class="tagline">Your agent buys ad space, and only pays when the ad is really there.</div>
+    <div class="meta">
+      <span>Day <b id="mDay"></b></span>
+      <span>PayPal <b id="mPay"></b></span>
+      <span title="AI cost so far. Stops at $1.">AI <b id="mAi"></b></span>
+      <button class="mini" id="nextDay">Next day</button>
+      <button class="mini" id="reset">Start over</button>
+    </div>
+  </header>
+
+  <section class="brief" aria-label="Your campaign">
+    <p class="sentence">
+      Get <input id="fProduct" aria-label="Product" size="26"> in front of <input id="fAudience" aria-label="Audience" size="28">.
+      Spend up to $<input id="fBudget" aria-label="Budget in dollars" type="number" min="50" max="5000" style="width:3.2ch">, and go live within <input id="fDays" aria-label="Days" type="number" min="1" max="14" style="width:1.6ch"> days.
+    </p>
+    <div class="launch">
+      <button class="big" id="go">Send my agent</button>
+      <div id="status" role="status" aria-live="polite"></div>
+      <div id="errorBox" role="alert"></div>
+    </div>
+  </section>
+
+  <div class="desk">
+    <section class="col" aria-labelledby="hMarket">
+      <h2 id="hMarket">Who's for sale</h2>
+      <p class="sub">Past prices are demo data. So are these publishers.</p>
+      <div id="market"></div>
+    </section>
+    <section class="col" id="room" aria-label="Deal room"></section>
+    <section class="col" aria-labelledby="hMoney">
+      <h2 id="hMoney">Your money</h2>
+      <div id="money"></div>
+      <div class="mem"><h2>What I remember</h2><p class="sub">This is what makes the next campaign cheaper.</p><div id="memory"></div></div>
+      <details><summary>Everything I did</summary><div class="log" id="log"></div></details>
+    </section>
+  </div>
+  <p class="disclaimer">Throwaway prototype. PayPal sandbox with simulated money. Publishers, past prices and click counts are made up, and the agents really do negotiate through an AI model. The proof check fetches each demo publisher's page.</p>
+</div>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids.filter((k) => k != null)); return e; };
+const usd = (n) => '$' + Math.round(Number(n)).toLocaleString('en-US');
+const initials = (n) => n.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w)).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+let S = null, selected = null, userPicked = false, lastSnap = '', timer = null, lastTalking = null;
+
+const STATUS = { talking:'NEGOTIATING', agreed:'AGREED', no_deal:'NO DEAL', held:'MONEY HELD', waiting:'WAITING FOR AD', fixing:'ASKED TO FIX', paid:'PAID', voided:'HOLD RELEASED' };
+
+function spark(prices, w = 62, h = 20) {
+  if (!prices || prices.length < 2) return null;
+  const lo = Math.min(...prices), hi = Math.max(...prices), span = hi - lo || 1;
+  const pts = prices.map((p, i) => `${(i / (prices.length - 1) * (w - 4) + 2).toFixed(1)},${(h - 3 - (p - lo) / span * (h - 6)).toFixed(1)}`).join(' ');
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('class', 'spark'); s.setAttribute('width', w); s.setAttribute('height', h); s.setAttribute('viewBox', `0 0 ${w} ${h}`); s.setAttribute('role', 'img');
+  s.setAttribute('aria-label', `Past prices from ${usd(lo)} to ${usd(hi)}`);
+  s.innerHTML = `<polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.5"/>`;
+  return s;
+}
+
+function renderMarket(s) {
+  const order = { talk:0, undefined:1, skip:2 };
+  const rows = s.market.map((p) => ({ p, b: s.board.find((r) => r.id === p.id), d: s.deals.find((x) => x.pubId === p.id) }))
+    .sort((a, c) => (order[a.b?.verdict] ?? 1) - (order[c.b?.verdict] ?? 1));
+  $('market').replaceChildren(...rows.map(({ p, b, d }) => {
+    const paidBefore = s.memory.deals.filter((m) => m.pubId === p.id);
+    return el('button', { className: `pub${b?.verdict === 'skip' ? ' skip' : ''}${selected === p.id ? ' sel' : ''}`, onclick: () => { selected = p.id; userPicked = true; render(s); } },
+      el('div', { className: 'av', style: `background:${p.accent}`, textContent: initials(p.name) }),
+      el('div', {}, el('div', { className: 'pname', textContent: p.name }), el('div', { className: 'pkind', textContent: `${p.kind} · ${p.audience}` }),
+        b ? el('span', { className: `verdict v-${b.verdict}`, textContent: d ? STATUS[d.status] : b.verdict === 'talk' ? 'NEXT' : 'SKIP' }) : null,
+        paidBefore.length ? el('span', { className: 'verdict v-mem', textContent: 'WORKED WITH' }) : null),
+      el('div', {}, el('div', { className: 'pask', textContent: usd(p.ask) }), spark(p.price.prices)),
+      b?.verdict === 'skip' ? el('div', { className: 'why', textContent: b.why }) : null);
+  }));
+}
+
+function meter(d, pub) {
+  const vals = [d.limit, d.fair, pub.ask, d.offer || d.limit].filter(Boolean);
+  const lo = Math.min(...vals) * 0.8, hi = Math.max(...vals) * 1.04, at = (v) => ((v - lo) / (hi - lo) * 100).toFixed(1) + '%';
+  const done = d.status !== 'talking' && d.price;
+  const m = el('div', { className: 'meter', role: 'img', 'aria-label': done ? `Agreed at ${usd(d.price)}, asked ${usd(pub.ask)}` : `Offer ${usd(d.offer)}, asking ${usd(d.ask)}, your limit ${usd(d.limit)}` },
+    el('div', { className: 'track' }));
+  if (d.offer && d.ask > d.offer) m.append(el('div', { className: 'gap', style: `left:${at(d.offer)};width:calc(${at(d.ask)} - ${at(d.offer)})` }));
+  if (done) m.append(el('div', { className: 'mark top you', style: `left:${at(d.price)}` }, 'Agreed', el('b', { textContent: usd(d.price) })));
+  else {
+    if (d.offer) m.append(el('div', { className: 'mark top you', style: `left:${at(d.offer)}` }, 'My offer', el('b', { textContent: usd(d.offer) })));
+    m.append(el('div', { className: 'mark top them', style: `left:${at(d.ask)}` }, 'They ask', el('b', { textContent: usd(d.ask) })));
+  }
+  m.append(el('div', { className: 'mark low', style: `left:${at(d.limit)}` }, el('b', { textContent: usd(d.limit) }), 'my limit'));
+  if (Math.abs(d.fair - d.limit) / (hi - lo) > 0.14) m.append(el('div', { className: 'mark low', style: `left:${at(d.fair)}` }, el('b', { textContent: usd(d.fair) }), 'fair price'));
+  return m;
+}
+
+function stepsFor(d) {
+  const order = ['agreed', 'held', 'live', 'checked', 'paid'];
+  const labels = ['Price agreed', 'Money held', 'Ad live', 'Proof checked', 'Paid'];
+  let reached = { talking:-1, no_deal:-1, agreed:0, held:1, waiting:1, fixing:2, paid:4, voided:1 }[d.status];
+  return el('ol', { className: 'steps' }, ...labels.map((l, i) => el('li', { textContent: l, className: i <= reached ? 'done' : i === reached + 1 && !['voided', 'no_deal'].includes(d.status) ? 'now' : i === reached + 1 ? 'bad' : '' })));
+}
+
+function proof(d, pub) {
+  const out = [];
+  if (d.status === 'waiting') out.push(el('p', { className: 'proof', textContent: `${pub.name} hasn't run the ad. Your ${usd(d.price)} stays on hold until ${d.deadline}. If it doesn't appear by then, I release it and you pay nothing.` }));
+  if (d.status === 'voided') out.push(el('p', { className: 'proof', textContent: `The deadline passed with no ad. I released the hold and you paid nothing. I won't use ${pub.name} again.` }));
+  if (d.check) out.push(el('div', { className: 'proof' }, 'I fetched the page and checked:', el('ul', {},
+    el('li', { textContent: `${d.check.link ? 'Yes' : 'No'}: my tracked link is there` }),
+    el('li', { textContent: `${d.check.label ? 'Yes' : 'No'}: it's labelled as sponsored` }),
+    d.needed_fix ? el('li', { textContent: 'The first check failed: no "sponsored" label. I held the money until they fixed it.' }) : null),
+    ' ', el('a', { href: `/pub/${pub.id}`, target: '_blank', rel: 'noopener', textContent: 'See the page' })));
+  if (d.status === 'paid') out.push(el('p', { className: 'proof' }, el('span', { className: 'saved', textContent: `${usd(d.clicks)} clicks` }), `, so ${(d.price / d.clicks).toLocaleString('en-US', { style: 'currency', currency: 'USD' })} a click (simulated).`));
+  const ids = [d.authId && `Hold ${d.authId}`, d.captureId && `Capture ${d.captureId}`, d.payoutId && `Payout ${d.payoutId}`].filter(Boolean);
+  if (ids.length) out.push(el('div', { className: 'ids', textContent: ids.join(' · ') }));
+  if (d.payoutError) out.push(el('p', { className: 'proof', style: 'color:#b3261e', textContent: `Payment to the publisher failed: ${d.payoutError}` }));
+  return out;
+}
+
+function renderRoom(s) {
+  const pub = s.market.find((p) => p.id === selected);
+  const d = s.deals.find((x) => x.pubId === selected);
+  const b = s.board.find((r) => r.id === selected);
+  if (!s.deals.length && !pub) {
+    return $('room').replaceChildren(el('h2', { textContent: 'Deal room' }), el('div', { className: 'empty', style: 'margin-top:12px' },
+      el('strong', { textContent: 'No haggling yet.' }), 'Send your agent, and you’ll watch it bargain with each publisher’s agent, right here. It knows what the slot went for before. It won’t go past your limit, even if its AI tries to.'));
+  }
+  if (!pub) return;
+  const head = el('div', { className: 'room-head' }, el('h3', { className: 'room-title', textContent: pub.name }), el('span', { className: 'small muted', textContent: `${pub.kind} · ${pub.about}` }));
+  if (!d) {
+    const past = s.memory.deals.filter((m) => m.pubId === pub.id);
+    return $('room').replaceChildren(head, el('div', { className: 'empty', style: 'margin-top:12px' },
+      el('strong', { textContent: b ? (b.verdict === 'skip' ? 'Skipped.' : 'Next in line.') : `Asking ${usd(pub.ask)}.` }),
+      b ? b.why : `Past deals went for ${pub.price.prices.map(usd).join(', ')}.`,
+      past.length ? el('div', { style: 'margin-top:8px', textContent: `You've worked with them ${past.length} time${past.length > 1 ? 's' : ''}.` }) : null));
+  }
+  const chat = el('div', { className: 'chat' }, ...d.messages.map((m) => el('div', { className: `msg m-${m.from}` }, m.price != null && m.from !== 'system' ? el('span', { className: 'p', textContent: usd(m.price) }) : null, m.text)));
+  const saved = d.price && pub.ask - d.price;
+  $('room').replaceChildren(...[head, meter(d, pub),
+    d.usedMemory ? el('div', { className: 'small', style: 'color:#9b2c06;font-weight:600', textContent: 'Using what I learned from your last deal with them.' }) : null,
+    el('div', { className: 'legend' }, el('span', { textContent: 'Your agent' }), el('span', { textContent: `${pub.name}'s agent` })), chat,
+    saved > 0 ? el('div', { className: 'small', style: 'margin-top:6px' }, el('span', { className: 'saved', textContent: `Saved ${usd(saved)}` }), ` off the ${usd(pub.ask)} asking price.`) : null,
+    d.status !== 'no_deal' && d.status !== 'talking' ? stepsFor(d) : null, ...proof(d, pub)].filter(Boolean));
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function renderMoney(s) {
+  const budget = s.brief.budget;
+  const paid = s.deals.filter((d) => d.status === 'paid').reduce((a, d) => a + d.price, 0);
+  const held = s.deals.filter((d) => ['held', 'waiting', 'fixing'].includes(d.status)).reduce((a, d) => a + d.price, 0);
+  const agreed = s.deals.filter((d) => d.status === 'agreed').reduce((a, d) => a + d.price, 0);
+  const asked = s.deals.filter((d) => d.price).reduce((a, d) => a + (s.market.find((p) => p.id === d.pubId).ask - d.price), 0);
+  const kids = [
+    el('div', { className: 'row' }, el('span', { className: 'mono', style: 'font-size:22px', textContent: usd(paid + held + agreed) }), el('span', { className: 'muted', style: 'align-self:flex-end', textContent: `of ${usd(budget)}` })),
+    el('div', { className: 'budget', role: 'img', 'aria-label': `${usd(paid)} paid, ${usd(held)} on hold, ${usd(agreed)} agreed` },
+      el('i', { style: `width:${paid / budget * 100}%;background:var(--go)` }), el('i', { style: `width:${held / budget * 100}%;background:var(--warn)` }), el('i', { style: `width:${agreed / budget * 100}%;background:var(--ink)` })),
+    el('div', { className: 'small muted', textContent: `${usd(paid)} paid · ${usd(held)} on hold · ${usd(agreed)} agreed` }),
+    asked > 0 ? el('div', { className: 'small saved', style: 'margin-top:2px', textContent: `${usd(asked)} below asking so far` }) : null,
+  ];
+  const ready = s.deals.filter((d) => d.status === 'agreed');
+  if (ready.length && !s.working) {
+    kids.push(el('div', { style: 'margin:12px 0 4px' }, el('button', { className: 'pay', textContent: `Hold ${usd(agreed)} with PayPal`, onclick: () => post('/api/fund') }),
+      el('div', { className: 'small muted', style: 'margin-top:5px', textContent: s.hasPaypal ? 'Sandbox. Nothing is taken until I see the ad live.' : 'Sandbox. You approve once, and nothing is taken until I see the ad live.' })));
+  }
+  if (s.deals.length) kids.push(el('div', { style: 'margin-top:10px' }, ...s.deals.map((d) => {
+    const p = s.market.find((x) => x.id === d.pubId);
+    return el('button', { className: 'deal', onclick: () => { selected = d.pubId; userPicked = true; render(s); } }, el('div', { className: 'row' }, el('strong', { textContent: p.name }), el('span', { className: 'mono', textContent: d.price ? usd(d.price) : '–' })), el('div', { className: `st st-${d.status}`, textContent: STATUS[d.status] }));
+  })));
+  $('money').replaceChildren(...kids.filter(Boolean));
+}
+
+function renderMemory(s) {
+  const rows = [...s.memory.deals].reverse();
+  if (!rows.length) return $('memory').replaceChildren(el('div', { className: 'small muted', textContent: 'Nothing yet. After your first campaign, I’ll remember what each slot really cost and whether it delivered.' }));
+  $('memory').replaceChildren(...rows.map((m) => {
+    const p = s.market.find((x) => x.id === m.pubId);
+    const text = m.outcome === 'no_show' ? `${p.name} never ran the ad. I won't pay them again.`
+      : `${p.name}: paid ${usd(m.price)} for ${usd(m.clicks).slice(1)} clicks, $${(m.price / m.clicks).toFixed(2)} each.${m.outcome === 'needed_fix' ? ' They left off the sponsored label until I asked.' : ''}`;
+    return el('div', { className: 'lesson', textContent: text });
+  }));
+}
+
+function render(s) {
+  S = s;
+  $('mDay').textContent = s.day;
+  $('mPay').textContent = s.hasPaypal ? 'linked' : 'not linked'; $('mPay').className = s.hasPaypal ? 'ok' : '';
+  $('mAi').textContent = '$' + Number(s.modelCost).toFixed(3);
+  const busy = !!s.working;
+  $('go').disabled = busy; $('nextDay').disabled = busy; $('reset').disabled = busy;
+  $('go').textContent = s.memory.deals.length ? 'Run another campaign' : 'Send my agent';
+  if (busy) { $('status').className = 'on'; $('status').textContent = s.working + '…'; }
+  else { $('status').className = ''; $('status').textContent = statusLine(s); }
+  $('errorBox').textContent = s.lastError || '';
+  // Follow whichever deal is moving, until someone picks one themselves.
+  const talking = s.deals.find((d) => d.status === 'talking');
+  if (talking && talking.pubId !== lastTalking) { lastTalking = talking.pubId; userPicked = false; }
+  if (!userPicked) { const live = talking || (s.working && [...s.deals].reverse().find((d) => ['fixing', 'held'].includes(d.status))) || (!selected && s.deals[0]); if (live) selected = live.pubId; }
+  renderMarket(s); renderRoom(s); renderMoney(s); renderMemory(s);
+  $('log').replaceChildren(...s.log.slice(0, 60).map((l) => el('div', { textContent: `${l.day.slice(5)} · ${l.text}` })));
+}
+
+function statusLine(s) {
+  if (!s.deals.length) return '';
+  const c = s.deals.reduce((a, d) => { a[d.status] = (a[d.status] || 0) + 1; return a; }, {});
+  if (c.agreed) return `${c.agreed} deal${c.agreed > 1 ? 's' : ''} agreed. Your turn: hold the money, and I'll make sure the ads run.`;
+  if (c.waiting) return `Still waiting on an ad. Press Next day to move time forward.`;
+  if (c.paid) return `Done. Run another campaign to see what I learned.`;
+  return '';
+}
+
+function fillBrief(s) {
+  $('fProduct').value = s.brief.product; $('fAudience').value = s.brief.audience; $('fBudget').value = s.brief.budget; $('fDays').value = s.brief.days;
+  for (const id of ['fProduct', 'fAudience']) $(id).size = Math.max(8, $(id).value.length);
+  $('fBudget').style.width = `${String(s.brief.budget).length + 0.6}ch`;
+}
+for (const id of ['fProduct', 'fAudience']) $(id).addEventListener('input', () => { $(id).size = Math.max(8, $(id).value.length); });
+$('fBudget').addEventListener('input', () => { $('fBudget').style.width = `${$('fBudget').value.length + 0.6}ch`; });
+
+async function refresh() {
+  const res = await fetch('/api/state').catch(() => null);
+  if (!res) return;
+  const text = await res.text();
+  if (text !== lastSnap) { lastSnap = text; render(JSON.parse(text)); }
+  clearTimeout(timer);
+  if (S?.working) timer = setTimeout(refresh, 700);
+}
+
+async function post(path, body) {
+  const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) });
+  const data = await res.json();
+  if (data.approveUrl) { $('status').textContent = 'Opening PayPal…'; window.location.href = data.approveUrl; return; }
+  if (data.error) $('errorBox').textContent = data.error;
+  lastSnap = '';
+  refresh();
+}
+
+$('go').onclick = () => { selected = null; userPicked = false; post('/api/run', { product: $('fProduct').value.trim(), audience: $('fAudience').value.trim(), budget: $('fBudget').value, days: $('fDays').value }); };
+$('nextDay').onclick = () => post('/api/day', { days: 1 });
+$('reset').onclick = async () => { if (confirm('Start over? The agent forgets everything, including the PayPal link.')) { selected = null; userPicked = false; await post('/api/reset'); const s = await (await fetch('/api/state')).json(); fillBrief(s); } };
+
+fetch('/api/state').then((r) => r.json()).then((s) => { fillBrief(s); lastSnap = ''; refresh(); });
+</script>
+</body>
+</html>

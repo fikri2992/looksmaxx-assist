@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shelfie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root { --night:#171222; --panel:#2a2038; --panel2:#352848; --edge:#0f0b18; --line:#4d3c66; --cream:#fbf0dc; --dim:#c4b5d6; --pink:#ff8fb1; --mint:#7fe0b0; --amber:#ffc861; --red:#ff8a7a; --plum:#c9a0ff; }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--night); color:var(--cream); font:500 18px/1.35 'Pixelify Sans', ui-monospace, monospace; }
+  .game { max-width:1180px; min-height:100%; margin:0 auto; padding:12px 16px; display:flex; flex-direction:column; gap:10px; }
+
+  .hud { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .brand { font-size:26px; font-weight:700; color:var(--pink); margin-right:6px; letter-spacing:.5px; }
+  .chip { background:var(--panel); border:3px solid var(--edge); padding:2px 10px; font-size:16px; white-space:nowrap; }
+  .chip b { font:400 20px/1 VT323, ui-monospace, monospace; color:var(--amber); }
+  .chip.ok b { color:var(--mint); }
+  .hud .gap { flex:1; }
+
+  .stage { position:relative; align-self:center; width:100%; max-width:calc((100vh - 268px) * 16 / 9); min-width:min(100%, 320px); border:4px solid var(--edge); box-shadow:0 0 0 3px var(--line); line-height:0; }
+  svg.scene { display:block; width:100%; height:auto; image-rendering:pixelated; }
+  svg.scene text { font-family:'Pixelify Sans', ui-monospace, monospace; }
+  .spot { cursor:pointer; outline:none; }
+  .spot .hit { fill:transparent; stroke:transparent; stroke-width:1; }
+  .spot:hover .hit, .spot:focus-visible .hit { fill:rgba(255,200,97,.09); stroke:var(--amber); stroke-dasharray:2 2; }
+  .spot .tag { opacity:0; }
+  .spot:hover .tag, .spot:focus-visible .tag { opacity:1; }
+  body.busy .spot { cursor:wait; }
+  #agent { transition:transform .9s steps(14); }
+  #agentBody { animation:bob 1s steps(2) infinite; }
+  body.busy #agentBody { animation-duration:.4s; }
+  @keyframes bob { 50% { transform:translateY(-1px); } }
+  #think { visibility:hidden; }
+  body.busy #think { visibility:visible; }
+  #think rect.dot { animation:dot 1s steps(2) infinite; }
+  #think rect.dot:nth-of-type(3) { animation-delay:.2s; } #think rect.dot:nth-of-type(4) { animation-delay:.4s; }
+  @keyframes dot { 50% { opacity:.25; } }
+  .arrow { animation:hop .7s steps(2) infinite; }
+  @keyframes hop { 50% { transform:translateY(2px); } }
+  .alert { animation:hop .6s steps(2) infinite; }
+  .twinkle { animation:dot 2.2s steps(2) infinite; }
+
+  .talk { display:grid; grid-template-columns:84px minmax(0,1fr); gap:12px; background:var(--panel); border:4px solid var(--edge); box-shadow:inset 0 0 0 3px var(--line); padding:12px; }
+  .face { width:84px; height:84px; background:#ffd9c4; border:3px solid var(--edge); overflow:hidden; line-height:0; }
+  .who { color:var(--pink); font-weight:700; font-size:16px; }
+  #line { font-size:21px; min-height:2.7em; }
+  .acts { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+
+  button, .btn { font:600 17px/1.2 'Pixelify Sans', ui-monospace, monospace; color:var(--cream); background:var(--panel2); border:3px solid var(--edge); box-shadow:inset -2px -2px 0 rgba(0,0,0,.35), inset 2px 2px 0 rgba(255,255,255,.1); padding:6px 12px; cursor:pointer; display:inline-block; }
+  button:hover:not(:disabled), .btn:hover { background:#44335c; }
+  button:active:not(:disabled), .btn:active { transform:translateY(2px); box-shadow:inset 2px 2px 0 rgba(0,0,0,.35); }
+  button:focus-visible, .btn:focus-within, textarea:focus-visible, input:focus-visible { outline:3px solid var(--amber); outline-offset:2px; }
+  button:disabled { opacity:.55; cursor:wait; }
+  button.next { background:var(--pink); color:#2a1020; }
+  button.next:hover:not(:disabled) { background:#ffa6c2; }
+  button.go { background:var(--mint); color:#0d2a1e; }
+  button.go:hover:not(:disabled) { background:#9aeac3; }
+  button.small { font-size:15px; padding:2px 8px; }
+  input[type=file] { position:absolute; opacity:0; width:1px; height:1px; }
+
+  dialog.win { background:var(--panel); color:var(--cream); border:4px solid var(--edge); box-shadow:0 0 0 3px var(--line), 0 12px 0 rgba(0,0,0,.4); padding:0; width:min(760px, calc(100vw - 32px)); max-height:calc(100vh - 48px); }
+  dialog.win::backdrop { background:rgba(15,11,24,.55); }
+  .bar { position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--panel2); border-bottom:3px solid var(--edge); padding:8px 12px; }
+  .bar h2 { margin:0; font-size:22px; color:var(--amber); font-weight:700; }
+  .body { padding:12px 14px 16px; }
+  .note { color:var(--dim); font-size:16px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; }
+  h3 { margin:14px 0 6px; font-size:18px; color:var(--pink); font-weight:700; }
+  textarea { width:100%; font:500 18px/1.3 'Pixelify Sans', ui-monospace, monospace; color:var(--cream); background:var(--night); border:3px solid var(--edge); padding:8px; }
+
+  .list > * { padding:7px 0; border-top:2px solid var(--line); }
+  .list > *:first-child { border-top:0; }
+  .check { display:grid; grid-template-columns:22px 26px minmax(0,1fr); gap:8px; align-items:center; cursor:pointer; }
+  .check input { width:18px; height:18px; accent-color:var(--pink); margin:0; }
+  .mini { width:26px; height:26px; display:block; }
+  .owned { display:grid; grid-template-columns:26px minmax(0,1fr) auto; gap:8px; align-items:center; }
+  .hp { display:inline-block; width:64px; height:10px; background:var(--night); border:2px solid var(--edge); vertical-align:middle; }
+  .hp i { display:block; height:100%; }
+
+  .pips { letter-spacing:2px; }
+  .sheet { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:4px 22px; }
+  .stat { display:flex; justify-content:space-between; gap:8px; padding:4px 0; border-bottom:2px solid var(--line); }
+  .swatches { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+  .sw { display:grid; grid-template-columns:30px minmax(0,1fr); gap:8px; align-items:center; font-size:15px; }
+  .sw span.c { width:30px; height:30px; border:3px solid var(--edge); }
+
+  .card { display:grid; grid-template-columns:84px minmax(0,1fr); gap:12px; padding:12px; margin-bottom:10px; background:var(--panel2); border:3px solid var(--edge); position:relative; }
+  .pic { width:84px; height:84px; background:#fff; border:3px solid var(--edge); object-fit:contain; display:block; }
+  .pic.empty { background:var(--night); display:grid; place-items:center; color:var(--dim); font-size:26px; }
+  .card h4 { margin:0; font-size:19px; font-weight:700; padding-right:92px; }
+  .title { font-size:16px; color:var(--dim); overflow-wrap:anywhere; }
+  .price { font:400 28px/1.1 VT323, ui-monospace, monospace; color:var(--amber); }
+  .why { margin-top:4px; }
+  .warn { color:var(--red); font-size:16px; }
+  .stamp { position:absolute; top:10px; right:10px; font-size:20px; font-weight:700; padding:1px 9px; border:3px solid currentColor; transform:rotate(-5deg); background:var(--panel); }
+  .st-buy,.st-bought { color:var(--mint); } .st-wait,.st-ask { color:var(--amber); } .st-skip { color:var(--plum); } .st-no_match,.st-error { color:var(--red); } .st-todo,.st-returned { color:var(--dim); }
+  svg.spark { display:block; margin:4px 0 0; max-width:100%; }
+
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+  #err { color:var(--red); }
+
+  @media (max-width:640px) {
+    .game { padding:8px; }
+    .stage { max-width:100%; }
+    .talk { grid-template-columns:56px minmax(0,1fr); gap:8px; padding:8px; }
+    .face { width:56px; height:56px; }
+    #line { font-size:18px; }
+    .card { grid-template-columns:60px minmax(0,1fr); }
+    .pic { width:60px; height:60px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #agent { transition:none; }
+    #agentBody, .arrow, .alert, .twinkle, #think rect.dot { animation:none; }
+  }
+</style>
+</head>
+<body>
+<div class="game">
+  <div class="hud">
+    <span class="brand">Shelfie</span>
+    <span class="chip" id="cDay"></span>
+    <span class="chip" id="cSpent"></span>
+    <span class="chip" id="cPay"></span>
+    <span class="chip" id="cAi" title="AI cost so far. Stops at $1."></span>
+    <span class="gap"></span>
+    <button class="small" id="voice" aria-pressed="false">Voice off</button>
+    <button class="small" id="week">Skip a week</button>
+    <button class="small" id="reset">Start over</button>
+  </div>
+  <div class="stage"><svg class="scene" id="scene" viewBox="0 0 320 180" shape-rendering="crispEdges" role="group" aria-label="Your room. Click the shelf, mirror, laptop, bag or notebook."></svg></div>
+  <div class="talk">
+    <div class="face" id="face" aria-hidden="true"></div>
+    <div>
+      <div class="who">Bea, your beauty buyer</div>
+      <div id="line" aria-hidden="true"></div>
+      <div class="sr" id="lineSr" aria-live="polite"></div>
+      <div class="acts" id="acts"></div>
+    </div>
+  </div>
+</div>
+
+<dialog class="win" id="win" aria-labelledby="winTitle">
+  <div class="bar"><h2 id="winTitle"></h2><button class="small" id="winClose">Close</button></div>
+  <div class="body" id="winBody"></div>
+</dialog>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids.filter((k) => k != null)); return e; };
+const usd = (n) => '$' + Number(n).toFixed(2);
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let S = null, busy = false, panel = null, voiceOn = false;
+
+// ---------- Pixel drawing ----------
+const R = (x, y, w, h, c, extra = '') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" ${extra}/>`;
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sprite = (rows, colors, ox = 0, oy = 0) => rows.map((row, y) => [...row].map((ch, x) => colors[ch] ? R(ox + x, oy + y, 1, 1, colors[ch]) : '').join('')).join('');
+
+const BEA = ['....hhhhhhhh....','...hhhhhhhhhh...','..hhgghhhhhhhh..','..hhhsssssshhh..','..hhsssssssshh..','..hhseesseeshh..','..hhsssssssshh..','..hhsssmmssshh..','...hssssssssh...','....ccsssscc....','...ccwwwwwwcc...','..sccwwwwwwccs..','..sccwwwwwwccs..','..sccwwwwwwccs..','..sscwwwwwwcss..','....cwwwwwwc....','....cccccccc....','....pppppppp....','....ppp..ppp....','....ppp..ppp....','....ppp..ppp....','....bbb..bbb....','...bbbb..bbbb...'];
+const BEA_COLORS = { h:'#6b2d4f', g:'#94426f', s:'#f4c2a0', e:'#2a1a2a', m:'#c4596e', c:'#ff8fb1', w:'#fbf0dc', p:'#4b3a6b', b:'#241a30' };
+
+const KIND = { cleanser:'pump', moisturizer:'pump', foundation:'pump', 'setting spray':'pump', toner:'dropper', serum:'dropper', sunscreen:'tube', primer:'tube', other:'tube', powder:'jar', blush:'jar', bronzer:'jar', eyeshadow:'jar', concealer:'stick', brow:'stick', eyeliner:'stick', mascara:'stick', lipstick:'stick', 'lip gloss':'stick' };
+const TINTS = ['#ffb3c7', '#9ad9e8', '#c9b1ff', '#ffd98a', '#a7e8c0', '#ff9f8a', '#e6e0d4', '#f7a8de'];
+const tint = (name) => { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0; return TINTS[h % TINTS.length]; };
+
+function bottle(x, base, type, name) {
+  const c = tint(name), d = '#3a2c50', cream = '#fbf0dc', gold = '#e8b85c';
+  switch (KIND[type] || 'tube') {
+    case 'pump': return R(x + 1, base - 15, 5, 1, d) + R(x + 3, base - 14, 2, 3, d) + R(x, base - 11, 8, 11, c) + R(x + 1, base - 7, 6, 4, cream) + R(x, base - 11, 1, 11, 'rgba(255,255,255,.3)');
+    case 'dropper': return R(x + 2, base - 14, 2, 3, d) + R(x + 1, base - 11, 4, 2, gold) + R(x, base - 9, 6, 9, c) + R(x + 1, base - 6, 4, 3, cream);
+    case 'jar': return R(x, base - 6, 10, 2, gold) + R(x, base - 4, 10, 4, c) + R(x + 2, base - 3, 6, 2, cream);
+    case 'stick': return R(x + 1, base - 11, 2, 5, c) + R(x, base - 6, 4, 2, gold) + R(x, base - 4, 4, 4, d);
+    default: return R(x, base - 13, 7, 1, d) + R(x, base - 12, 7, 9, c) + R(x + 1, base - 9, 5, 3, cream) + R(x + 1, base - 3, 5, 3, d);
+  }
+}
+const levelOf = (o) => (o.daysLeft == null ? null : Math.max(0, Math.min(1, o.daysLeft / (o.life || 60))));
+const levelColor = (f) => (f == null ? '#7a6a8f' : f > 0.5 ? '#7fe0b0' : f > 0.2 ? '#ffc861' : '#ff7a6b');
+
+function miniBottle(type, name) {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('viewBox', '0 0 12 16'); s.setAttribute('class', 'mini'); s.setAttribute('shape-rendering', 'crispEdges'); s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = bottle(2, 16, type, name);
+  return s;
+}
+
+function hotspot(id, label, x, y, w, h, art, tagY) {
+  const tw = label.length * 4 + 6, tx = Math.max(1, Math.min(319 - tw, x + w / 2 - tw / 2));
+  return `<g class="spot" id="spot-${id}" data-spot="${id}" tabindex="0" role="button" aria-label="${esc(label)}">${art}<rect class="hit" x="${x}" y="${y}" width="${w}" height="${h}"/>
+    <g class="tag">${R(tx, tagY, tw, 9, '#0f0b18')}<text x="${tx + tw / 2}" y="${tagY + 7}" font-size="7" fill="#ffc861" text-anchor="middle">${esc(label)}</text></g></g>`;
+}
+
+function drawRoom() {
+  let a = '';
+  // Wall and floor
+  a += R(0, 0, 320, 132, '#2f2340');
+  for (let y = 6; y < 124; y += 12) for (let x = (y % 24 === 6 ? 4 : 10); x < 320; x += 12) a += R(x, y, 2, 2, '#3a2c50');
+  a += R(0, 124, 320, 8, '#1f1830') + R(0, 124, 320, 1, '#4d3c66');
+  a += R(0, 132, 320, 48, '#5b3a2e');
+  for (let y = 138; y < 180; y += 8) { a += R(0, y, 320, 1, '#4c2f26'); for (let x = (y % 16 === 2 ? 20 : 60); x < 320; x += 80) a += R(x, y, 1, 8, '#4c2f26'); }
+  a += R(98, 148, 124, 24, '#b4577c') + R(100, 150, 120, 20, '#8f3f5f') + R(104, 153, 112, 14, '#a64c70');
+  // Plant
+  a += R(84, 136, 12, 14, '#b4694a') + R(84, 136, 12, 2, '#cf8360') + R(88, 122, 3, 14, '#356b49') + R(82, 118, 7, 8, '#4f8a5b') + R(90, 114, 7, 9, '#4f8a5b') + R(86, 110, 5, 7, '#67a673');
+  // Window
+  a += R(242, 12, 66, 62, '#a9714a') + R(245, 15, 60, 56, '#3b2f66') + R(245, 47, 60, 8, '#7a4b8c') + R(245, 55, 60, 8, '#d9668a') + R(245, 63, 60, 8, '#f28f6b') + R(274, 15, 2, 56, '#a9714a') + R(245, 42, 60, 2, '#a9714a');
+  a += R(286, 21, 8, 8, '#fde9b8') + R(285, 23, 1, 4, '#fde9b8') + R(294, 23, 1, 4, '#fde9b8');
+  a += R(252, 22, 1, 1, '#fff', 'class="twinkle"') + R(263, 33, 1, 1, '#fff', 'class="twinkle"') + R(281, 36, 1, 1, '#fff');
+  a += R(238, 10, 8, 68, '#ff8fb1') + R(304, 10, 8, 68, '#ff8fb1') + R(240, 10, 2, 68, '#e6709a') + R(306, 10, 2, 68, '#e6709a') + R(236, 8, 78, 3, '#5e3a27');
+  // Desk
+  a += R(236, 106, 78, 5, '#a9714a') + R(236, 111, 78, 2, '#5e3a27') + R(240, 113, 5, 36, '#8a5a3c') + R(305, 113, 5, 36, '#8a5a3c');
+  a += R(290, 98, 7, 8, '#b4694a') + R(292, 90, 3, 8, '#4f8a5b') + R(289, 92, 3, 4, '#67a673') + R(295, 89, 3, 4, '#67a673');
+
+  const shelf = R(10, 54, 100, 3, '#a9714a') + R(10, 57, 100, 1, '#5e3a27') + R(14, 58, 3, 5, '#5e3a27') + R(103, 58, 3, 5, '#5e3a27')
+    + R(10, 98, 100, 3, '#a9714a') + R(10, 101, 100, 1, '#5e3a27') + R(14, 102, 3, 5, '#5e3a27') + R(103, 102, 3, 5, '#5e3a27') + '<g id="shelfItems"></g>';
+  a += hotspot('shelf', 'Scan my shelf', 7, 28, 106, 80, shelf, 18);
+
+  const vanity = R(136, 16, 68, 2, '#e8b85c') + R(132, 20, 76, 80, '#e8b85c') + R(134, 18, 72, 2, '#e8b85c') + R(135, 22, 70, 76, '#8fbccb') + R(135, 22, 70, 76, '#a9d4df')
+    + '<g opacity=".35">' + R(145, 30, 5, 40, '#e8f7fa') + R(152, 30, 2, 40, '#e8f7fa') + '</g><g id="mirrorInside"></g>'
+    + R(124, 100, 92, 5, '#a9714a') + R(124, 105, 92, 2, '#5e3a27') + R(128, 107, 84, 26, '#8a5a3c') + R(132, 110, 36, 10, '#a06a46') + R(172, 110, 36, 10, '#a06a46') + R(132, 122, 36, 8, '#a06a46') + R(172, 122, 36, 8, '#a06a46') + R(148, 114, 4, 2, '#e8b85c') + R(188, 114, 4, 2, '#e8b85c') + R(148, 125, 4, 2, '#e8b85c') + R(188, 125, 4, 2, '#e8b85c') + R(130, 133, 5, 16, '#6e4530') + R(205, 133, 5, 16, '#6e4530');
+  a += hotspot('mirror', 'Skin and makeup check-in', 128, 14, 84, 92, vanity, 4);
+
+  const book = R(127, 95, 14, 5, '#7fe0b0') + R(127, 95, 14, 1, '#a7f0cc') + R(127, 99, 14, 1, '#fbf0dc');
+  a += hotspot('notes', 'What Bea remembers', 124, 92, 20, 9, book, 83);
+
+  const laptop = R(252, 84, 32, 21, '#3a2c50') + R(254, 86, 28, 17, '#120e20') + R(256, 96, 4, 1, '#7fe0b0') + R(260, 93, 4, 1, '#7fe0b0') + R(264, 95, 4, 1, '#7fe0b0') + R(268, 90, 4, 1, '#ffc861') + R(272, 92, 4, 1, '#7fe0b0') + R(248, 105, 40, 2, '#4d3c66');
+  a += hotspot('shop', 'What should I buy?', 246, 82, 44, 26, laptop, 73);
+
+  const cal = R(216, 20, 20, 24, '#fbf0dc') + R(216, 20, 20, 6, '#ff7a6b') + R(219, 18, 2, 4, '#3a2c50') + R(231, 18, 2, 4, '#3a2c50') + '<text id="calDay" x="226" y="40" font-size="15" fill="#2a2038" text-anchor="middle" style="font-family:VT323,monospace"></text>';
+  a += hotspot('calendar', 'Next day', 214, 16, 24, 30, cal, 47);
+
+  const bag = R(222, 134, 2, 6, '#3a2c50') + R(232, 134, 2, 6, '#3a2c50') + R(222, 133, 12, 2, '#3a2c50') + R(218, 140, 20, 24, '#ffc861') + R(218, 140, 20, 3, '#e6a93e') + '<g id="bagBadge"></g>';
+  a += hotspot('tray', 'Buy, wait or skip', 214, 130, 28, 36, bag, 121);
+
+  // Bea
+  a += `<g id="agent" style="transform:translate(150px,126px)"><g transform="scale(1.35)"><g id="agentBody">${sprite(BEA, BEA_COLORS)}</g>
+    <g id="think">${R(14, -11, 15, 8, '#fbf0dc')}${R(13, -10, 1, 6, '#fbf0dc')}${R(16, -3, 3, 2, '#fbf0dc')}<rect class="dot" x="17" y="-8" width="2" height="2" fill="#2a2038"/><rect class="dot" x="21" y="-8" width="2" height="2" fill="#2a2038"/><rect class="dot" x="25" y="-8" width="2" height="2" fill="#2a2038"/></g></g></g>`;
+  a += '<g id="arrow"></g>';
+  $('scene').innerHTML = a;
+  $('face').innerHTML = `<svg viewBox="1 0 14 14" width="100%" height="100%" shape-rendering="crispEdges">${sprite(BEA.slice(0, 14), BEA_COLORS)}</svg>`;
+  $('scene').querySelectorAll('.spot').forEach((g) => {
+    g.addEventListener('click', () => open(g.dataset.spot));
+    g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(g.dataset.spot); } });
+  });
+}
+
+const POS = { shelf:[50, 118], mirror:[158, 118], shop:[258, 118], home:[148, 134], notes:[116, 118], tray:[190, 130] };
+const walk = (spot) => { const [x, y] = POS[spot] || POS.home; $('agent').style.transform = `translate(${x}px,${y}px)`; };
+
+// ---------- Bea talks ----------
+let typing = null;
+function say(text) {
+  $('lineSr').textContent = text;
+  clearInterval(typing);
+  if (still) $('line').textContent = text;
+  else { let i = 0; $('line').textContent = ''; typing = setInterval(() => { i += 2; $('line').textContent = text.slice(0, i); if (i >= text.length) clearInterval(typing); }, 16); }
+  if (voiceOn && 'speechSynthesis' in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(text)); }
+}
+
+function nextStep(s) {
+  if (s.shelfDraft.length) return 'shelf';
+  if (!s.memory.owned.some((o) => o.source === 'photo, you confirmed') && !s.needs.length) return 'shelf';
+  if (!s.memory.checkins.length && !s.needs.length) return 'mirror';
+  if (!s.needs.length) return 'shop';
+  return 'tray';
+}
+
+function lineFor(s) {
+  const step = nextStep(s);
+  if (s.shelfDraft.length) return `I found ${s.shelfDraft.length} things on your shelf. Check I got them right. I won't save anything you don't confirm.`;
+  if (step === 'shelf') return `Hi, I'm Bea! Show me your shelf, so I never buy what you already own.`;
+  if (step === 'mirror') return `Got it. Now the mirror: let me see your skin and makeup today. Just cosmetics, I'm no doctor.`;
+  if (step === 'shop') return `I know your stuff now. Tell me your goal, and I'll check real prices before spending anything.`;
+  const c = s.needs.reduce((a, n) => { a[n.status] = (a[n.status] || 0) + 1; return a; }, {});
+  const parts = [c.buy && `buy ${c.buy}`, c.wait && `wait on ${c.wait}`, c.skip && `skip ${c.skip}`, c.ask && `ask you about ${c.ask}`, c.bought && `already bought ${c.bought}`].filter(Boolean);
+  return parts.length ? `My call: ${parts.join(', ')}. Open the bag to see why.` : `I couldn't find a good match this time. Want to try another goal?`;
+}
+
+const ACTIONS = [['shelf', 'Scan my shelf'], ['mirror', 'Check my skin and makeup'], ['tell', 'Tell Bea something'], ['shop', 'What should I buy?'], ['tray', 'Open the bag'], ['notes', 'What Bea remembers']];
+function renderActs(s) {
+  const step = nextStep(s);
+  $('acts').replaceChildren(...ACTIONS.map(([id, label]) => el('button', {
+    textContent: id === 'tray' && s.needs.length ? `${label} (${s.needs.length})` : label,
+    className: id === step ? 'next' : '', disabled: busy, onclick: () => open(id),
+  })));
+}
+
+// ---------- Scene state ----------
+const bust = (c) => R(160, 36, 20, 2, c) + R(157, 38, 26, 3, c) + R(155, 41, 30, 16, c) + R(157, 57, 26, 4, c) + R(160, 61, 20, 2, c) + R(165, 63, 10, 5, c) + R(152, 68, 36, 3, c) + R(146, 71, 48, 27, c);
+
+function renderScene(s) {
+  const items = s.memory.owned;
+  let shelf = '';
+  items.slice(0, 14).forEach((o, i) => {
+    const row = i < 7 ? 54 : 98, x = 14 + (i % 7) * 13.5, f = levelOf(o), base = row, W = 10;
+    shelf += `<g><title>${esc(o.name)}${o.daysLeft != null ? `: about ${Math.max(o.daysLeft, 0)} days left` : ''}</title>${bottle(Math.round(x), base, o.type, o.name)}`
+      + R(Math.round(x), row + 3, W, 2, '#0f0b18') + (f == null ? R(Math.round(x), row + 3, W, 2, '#7a6a8f') : R(Math.round(x), row + 3, Math.max(1, Math.round(W * f)), 2, levelColor(f)))
+      + (f != null && f <= 0.2 ? `<g class="alert">${R(Math.round(x) + 3, row - 24, 2, 5, '#ff7a6b')}${R(Math.round(x) + 3, row - 18, 2, 2, '#ff7a6b')}</g>` : '') + '</g>';
+  });
+  if (items.length > 14) shelf += `<text x="104" y="96" font-size="7" fill="#fbf0dc" text-anchor="end">+${items.length - 14}</text>`;
+  $('shelfItems').innerHTML = shelf;
+
+  const c = s.memory.checkins[0];
+  let mirror = '';
+  if (c && c.reading.usable !== false) {
+    const colors = (c.reading.makeup?.steps || []).map((x) => x.color_hex).filter((h) => /^#[0-9a-f]{6}$/i.test(h || '')).slice(0, 6);
+    mirror += bust('#7ea6b5');
+    colors.forEach((h, i) => { mirror += R(146 + (i % 3) * 17, 75 + Math.floor(i / 3) * 10, 14, 8, h, 'stroke="#0f0b18" stroke-width=".5"'); });
+    (c.reading.skin || []).slice(0, 6).forEach((t, i) => { const lv = PIPS[t.level] ?? 0; mirror += R(139, 28 + i * 5, 12, 3, '#0f0b18') + R(139, 28 + i * 5, 4 * (lv + 1), 3, ['#7fe0b0', '#ffc861', '#ff7a6b'][lv]); });
+  } else {
+    mirror += bust('#8fbccb') + `<text x="170" y="55" font-size="15" fill="#5d8797" text-anchor="middle">?</text>`;
+  }
+  $('mirrorInside').innerHTML = mirror;
+  $('calDay').textContent = Number(s.day.slice(8));
+
+  const n = s.needs.length;
+  $('bagBadge').innerHTML = n ? R(226, 148, 11, 10, '#ff7a6b') + `<text x="231.5" y="156" font-size="9" fill="#0f0b18" text-anchor="middle" font-weight="700">${n}</text>` : '';
+
+  const step = nextStep(s);
+  const spot = { shelf:[60, 22], mirror:[170, 6], shop:[268, 74], tray:[228, 122] }[step];
+  $('arrow').innerHTML = spot && !busy ? `<g class="arrow">${R(spot[0] - 4, spot[1], 8, 2, '#ffc861')}${R(spot[0] - 3, spot[1] + 2, 6, 1, '#ffc861')}${R(spot[0] - 2, spot[1] + 3, 4, 1, '#ffc861')}${R(spot[0] - 1, spot[1] + 4, 2, 1, '#ffc861')}</g>` : '';
+}
+
+function chips(s) {
+  $('cDay').replaceChildren('Day ', el('b', { textContent: s.day }));
+  $('cSpent').replaceChildren('Spent ', el('b', { textContent: `${usd(s.spent)} / $${s.memory.rules.monthlyBudget}` }));
+  $('cPay').className = 'chip' + (s.hasPaypal ? ' ok' : '');
+  $('cPay').replaceChildren('PayPal ', el('b', { textContent: s.hasPaypal ? 'linked' : 'not linked' }));
+  $('cAi').replaceChildren('AI ', el('b', { textContent: '$' + Number(s.modelCost).toFixed(3) }));
+}
+
+function render(s) {
+  S = s;
+  chips(s); renderScene(s); renderActs(s);
+  if (panel) renderPanel();
+}
+
+// ---------- Talking to the server ----------
+let lastLogAt = null;
+async function act(spot, path, body, after) {
+  if (busy) return;
+  busy = true; document.body.classList.add('busy'); renderActs(S); renderScene(S); walk(spot);
+  const poll = setInterval(async () => {
+    const s = await fetch('/api/state').then((r) => r.json()).catch(() => null);
+    if (!s) return;
+    render(s);
+    const top = s.log[0];
+    if (top && top.at !== lastLogAt) { lastLogAt = top.at; say(top.text); }
+  }, 1200);
+  try {
+    const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) });
+    const data = await res.json();
+    if (data.approveUrl) { say('PayPal needs your OK once. After that, I can buy within your limits.'); window.location.href = data.approveUrl; return; }
+    clearInterval(poll);
+    busy = false; document.body.classList.remove('busy');
+    if (data.memory) render(data);
+    lastLogAt = data.log?.[0]?.at;
+    if (data.error) say(`That didn't work: ${data.error}`);
+    else if (after) after(data); else say(lineFor(data));
+  } catch (e) {
+    clearInterval(poll);
+    busy = false; document.body.classList.remove('busy');
+    say(`That didn't work: ${e.message}`);
+  }
+  walk('home');
+  renderActs(S); renderScene(S);
+}
+
+// Photos are shrunk in the browser first: cheaper and faster.
+async function shrink(blob) {
+  const img = await createImageBitmap(blob);
+  const scale = Math.min(1, 1280 / Math.max(img.width, img.height));
+  const c = el('canvas', { width: Math.round(img.width * scale), height: Math.round(img.height * scale) });
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.85);
+}
+const fromSample = async (url) => shrink(await (await fetch(url)).blob());
+
+// ---------- Panels ----------
+const TITLES = { shelf:'Your shelf', mirror:'Skin and makeup check-in', tell:'Tell Bea something', shop:'What should I buy?', tray:'The bag: buy, wait or skip', notes:'What Bea remembers' };
+function open(id) {
+  if (busy) return;
+  if (id === 'calendar') return act('home', '/api/day', { days: 1 }, (s) => say(alertFor(s) || `It's ${s.day} now.`));
+  panel = id;
+  walk(POS[id] ? id : 'home');
+  $('winTitle').textContent = TITLES[id];
+  renderPanel();
+  if (!$('win').open) $('win').showModal();
+}
+function closePanel() { panel = null; if ($('win').open) $('win').close(); }
+$('winClose').onclick = closePanel;
+$('win').addEventListener('close', () => { panel = null; walk('home'); });
+
+function alertFor(s) {
+  const low = s.memory.owned.filter((o) => o.daysLeft != null && o.daysLeft <= 7);
+  return low.length ? `Heads up: ${low[0].name} has about ${Math.max(low[0].daysLeft, 0)} days left${low.length > 1 ? `, and ${low.length - 1} more are low too` : ''}.` : null;
+}
+
+function fileButton(label, onFile, capture) {
+  const input = el('input', { type: 'file', accept: 'image/*' });
+  if (capture) input.setAttribute('capture', 'user');
+  input.onchange = async () => { if (input.files[0]) onFile(await shrink(input.files[0])); };
+  return el('label', { className: 'btn' }, label, input);
+}
+
+function renderPanel() {
+  const body = $('winBody');
+  const keep = document.activeElement?.tagName === 'TEXTAREA';
+  if (keep) return; // never wipe what someone is typing
+  body.replaceChildren(...({ shelf:panelShelf, mirror:panelMirror, tell:panelTell, shop:panelShop, tray:panelTray, notes:panelNotes }[panel] || (() => []))());
+}
+
+function scanShelf(image) { closePanel(); act('shelf', '/api/shelf', { image }, (s) => { say(lineFor(s)); open('shelf'); }); }
+function panelShelf() {
+  if (S.shelfDraft.length) {
+    const rows = S.shelfDraft.map((d) => {
+      const box = el('input', { type: 'checkbox', checked: d.keep, value: d.id });
+      return { box, row: el('label', { className: 'check' }, box, miniBottle(d.type, d.name),
+        el('span', {}, `${d.brand ? d.brand + ' ' : ''}${d.name} `, el('span', { className: 'note', textContent: `${d.type}, ${Math.round(d.confidence * 100)}% sure` }))) };
+    });
+    return [el('p', { className: 'note', textContent: 'Photos can fool me, so you get the final say. Only checked items go on your shelf.' }),
+      el('div', { className: 'list' }, ...rows.map((r) => r.row)),
+      el('div', { className: 'row' }, el('button', { className: 'next', textContent: 'Put these on my shelf', onclick: () => { const ids = rows.filter((r) => r.box.checked).map((r) => r.box.value); closePanel(); act('shelf', '/api/shelf/confirm', { ids }); } }))];
+  }
+  return [el('p', {}, 'Take one photo of your shelf or makeup bag. I read the labels I can see, and you confirm the list.'),
+    el('div', { className: 'row' }, fileButton('Upload a photo', scanShelf), el('button', { className: 'next', textContent: 'Try the sample shelf', onclick: async () => scanShelf(await fromSample('/sample/shelf.jpg')) })),
+    el('p', { className: 'note', textContent: 'Your photo goes to an AI model to be read, and Shelfie doesn’t keep it.' })];
+}
+
+function checkIn(image) { closePanel(); act('mirror', '/api/checkin', { image }, (s) => { const c = s.memory.checkins[0]; say(c.reading.usable === false ? `I can't read that one: ${c.reading.photo_problem}` : c.changes.length ? `Something changed since last time: ${c.changes[0]}. Lighting can do that too.` : lineFor(s)); open('mirror'); }); }
+const PIPS = { none:0, mild:1, noticeable:2 };
+function panelMirror() {
+  const out = [];
+  const c = S.memory.checkins[0];
+  if (c && c.reading.usable !== false) {
+    const r = c.reading;
+    out.push(el('h3', { textContent: `Skin today (${c.day})`, style: 'margin-top:0' }), el('div', { className: 'sheet' }, ...(r.skin || []).map((x) => el('div', { className: 'stat' },
+      el('span', {}, x.trait, x.where ? el('span', { className: 'note', textContent: ` ${x.where}` }) : null),
+      el('span', {}, el('span', { className: 'pips', style: `color:${[ '#7fe0b0', '#ffc861', '#ff8a7a' ][PIPS[x.level] ?? 0]}`, 'aria-hidden': 'true', textContent: '■'.repeat((PIPS[x.level] ?? 0) + 1) + '□'.repeat(2 - (PIPS[x.level] ?? 0)) }), ` ${x.level}`)))));
+    if (r.makeup?.wearing) out.push(el('h3', { textContent: 'Makeup I can see' }), el('div', { className: 'swatches' }, ...(r.makeup.steps || []).map((x) => el('div', { className: 'sw' },
+      el('span', { className: 'c', style: /^#[0-9a-f]{6}$/i.test(x.color_hex || '') ? `background:${x.color_hex}` : 'background:transparent' }),
+      el('span', {}, el('b', { textContent: x.step }), el('br'), `${x.look}${x.finish && x.finish !== 'null' ? `, ${x.finish}` : ''}`)))));
+    if (c.changes.length) out.push(el('h3', { textContent: 'Since last time' }), ...c.changes.map((t) => el('div', { textContent: t })), el('div', { className: 'note', textContent: 'Lighting can cause this too.' }));
+    if (r.cannot_tell?.length) out.push(el('p', { className: 'note', textContent: 'A photo can’t show: ' + r.cannot_tell.join(', ') + '.' }));
+    out.push(el('h3', { textContent: 'New check-in' }));
+  } else if (c) out.push(el('p', { className: 'warn', textContent: c.reading.photo_problem || 'That photo wasn’t usable.' }));
+  else out.push(el('p', {}, 'One selfie in even light, with no filter. I describe what I can see, so I can pick things that suit you. I can’t diagnose anything.'));
+  out.push(el('div', { className: 'row' }, fileButton('Take or upload a selfie', checkIn, true),
+    el('button', { className: c ? '' : 'next', textContent: 'Sample: first day', onclick: async () => checkIn(await fromSample('/sample/face-1.png')) }),
+    el('button', { textContent: 'Sample: a later day', onclick: async () => checkIn(await fromSample('/sample/face-2.png')) })),
+    el('p', { className: 'note', textContent: 'Samples show a fictional person. Your photo goes to an AI model to be read, and only the text result is saved.' }));
+  return out;
+}
+
+function panelTell() {
+  const t = el('textarea', { rows: 3, placeholder: 'The vitamin C serum stung my cheek. My moisturizer is almost gone.', 'aria-label': 'Tell Bea' });
+  return [el('p', {}, 'Reactions, what’s running out, what you like. I remember it for next time.'), t,
+    el('div', { className: 'row' }, el('button', { className: 'next', textContent: 'Remember this', onclick: () => { const text = t.value.trim(); if (!text) return; t.blur(); closePanel(); act('notes', '/api/remember', { text }); } }))];
+}
+
+function panelShop() {
+  const t = el('textarea', { rows: 3, value: S.goal, 'aria-label': 'Your goal' });
+  return [el('p', {}, 'What are you trying to do? I start with what you own, then check price history before anything else.'), t,
+    el('div', { className: 'row' }, el('button', { className: 'next', textContent: 'Go check', onclick: () => { const goal = t.value.trim(); t.blur(); closePanel(); act('shop', '/api/plan', { goal }, (s) => { say(lineFor(s)); open('tray'); }); } })),
+    el('p', { className: 'note', textContent: `Rules: I buy alone under $${S.memory.rules.askAbove} an item and $${S.memory.rules.monthlyBudget} a month, and ask you about anything else.` })];
+}
+
+function spark(prices, now) {
+  if (!prices || prices.length < 2) return null;
+  const W = 170, H = 30, lo = Math.min(...prices, now), hi = Math.max(...prices, now), span = hi - lo || 1;
+  const pts = prices.map((p, i) => `${(i / (prices.length - 1) * W).toFixed(1)},${(H - 4 - (p - lo) / span * (H - 8)).toFixed(1)}`).join(' ');
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('class', 'spark'); s.setAttribute('width', W); s.setAttribute('height', H); s.setAttribute('viewBox', `0 0 ${W} ${H}`); s.setAttribute('role', 'img');
+  s.setAttribute('aria-label', `Price over ${prices.length} days, between ${usd(lo)} and ${usd(hi)}`);
+  s.innerHTML = `<polyline points="${pts}" fill="none" stroke="#ffc861" stroke-width="2"/>`;
+  return s;
+}
+const STAMP = { buy:'BUY', bought:'BOUGHT', wait:'WAIT', skip:'SKIP', ask:'ASK YOU', no_match:'NO MATCH', error:'ERROR', todo:'...', returned:'RETURNED' };
+
+function needCard(n) {
+  const safeImg = n.pick?.image && /^https?:/.test(n.pick.image);
+  return el('div', { className: 'card' },
+    safeImg ? el('img', { className: 'pic', src: n.pick.image, alt: '', loading: 'lazy', referrerPolicy: 'no-referrer' }) : el('div', { className: 'pic empty', textContent: n.status === 'skip' ? '✓' : '?' }),
+    el('div', {},
+      el('h4', { textContent: n.need }),
+      el('span', { className: `stamp st-${n.status}`, textContent: STAMP[n.status] || n.status }),
+      n.pick ? el('div', { className: 'title', textContent: `${n.pick.title} · ${n.pick.store}` }) : null,
+      n.pick ? el('div', { className: 'price' }, usd(n.pick.price), n.pick.was ? el('span', { className: 'note', textContent: ` says "was ${usd(n.pick.was)}"` }) : null) : null,
+      el('div', { className: 'why', textContent: n.why || 'Checking…' }),
+      n.check?.fake ? el('div', { className: 'warn', textContent: 'Fake discount: ' + n.check.note }) : null,
+      n.check?.low != null ? el('div', { className: 'note' }, spark(n.history, n.pick.price), `${n.check.note} · ${n.historySource}`) : null,
+      n.status === 'ask' ? el('div', { className: 'row' }, el('button', { className: 'go', textContent: 'OK, buy this', onclick: () => act('tray', '/api/approve', { id: n.id }) })) : null));
+}
+
+function panelTray() {
+  const out = [];
+  if (!S.needs.length) return [el('p', {}, 'Nothing here yet. Ask me what to buy first.'), el('div', { className: 'row' }, el('button', { className: 'next', textContent: 'What should I buy?', onclick: () => open('shop') }))];
+  const ready = S.needs.filter((n) => n.status === 'buy');
+  if (ready.length) {
+    const total = ready.reduce((a, n) => a + n.pick.price, 0);
+    out.push(el('div', { className: 'row' }, el('button', { className: 'go', textContent: `Pay ${usd(total)} with PayPal (${ready.length})`, onclick: () => { closePanel(); act('tray', '/api/buy', {}, (s) => { say(`Done. I'll remind you before the return window closes.`); open('tray'); }); } }),
+      el('span', { className: 'note', textContent: S.hasPaypal ? 'Sandbox, simulated money.' : 'Sandbox, simulated money. PayPal asks you once, then I can buy within your limits.' })));
+  }
+  const order = { ask:0, buy:1, wait:2, skip:3, no_match:4, error:5, todo:6, bought:7, returned:8 };
+  out.push(...[...S.needs].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9)).map(needCard));
+  if (S.purchases.length) {
+    out.push(el('h3', { textContent: 'Receipts' }), el('div', { className: 'list' }, ...S.purchases.map((b) => {
+      const left = Math.round((new Date(b.returnBy + 'T00:00:00Z') - new Date(S.day + 'T00:00:00Z')) / 86400000);
+      return el('div', {}, el('div', { textContent: `${b.title.slice(0, 70)} · ${usd(b.total)}` }),
+        el('div', { className: 'note', textContent: `PayPal capture ${b.captureId}. ${b.refundId ? `Refunded (${b.refundId}).` : left < 0 ? 'Return window closed.' : `${left} days left to return.`}` }),
+        !b.refundId && left >= 0 ? el('div', { className: 'row' }, el('button', { className: 'small', textContent: 'Send it back', onclick: () => act('tray', '/api/refund', { id: b.id }) })) : null);
+    })));
+  }
+  return out;
+}
+
+function panelNotes() {
+  const m = S.memory;
+  return [el('p', { className: 'note', textContent: 'The bars are estimates from when you opened something. “Demo” items are made up for this prototype.' }),
+    el('h3', { textContent: 'On your shelf' }),
+    el('div', { className: 'list' }, ...m.owned.map((o) => { const f = levelOf(o); return el('div', { className: 'owned' }, miniBottle(o.type, o.name),
+      el('div', {}, o.name, el('div', { className: 'note', textContent: `${o.daysLeft != null ? `about ${Math.max(o.daysLeft, 0)} days left · ` : ''}${o.source.replace('seeded demo', 'demo')}` })),
+      el('span', { className: 'hp', title: o.basis }, el('i', { style: `width:${f == null ? 0 : Math.max(4, f * 100)}%;background:${levelColor(f)}` }))); })),
+    el('h3', { textContent: 'What reacted badly' }),
+    el('div', { className: 'list' }, ...m.reactions.map((r) => el('div', {}, `${r.item}: ${r.note}.`, el('div', { className: 'note', textContent: `I avoid: ${(r.avoid || []).join(', ') || 'nothing yet'} · ${r.source.replace('seeded demo', 'demo')}` })))),
+    el('h3', { textContent: 'What you like' }),
+    el('div', { className: 'list' }, ...m.preferences.map((p) => el('div', { textContent: p }))),
+    el('h3', { textContent: 'Recent notes' }),
+    el('div', { className: 'list note' }, ...S.log.slice(0, 12).map((l) => el('div', { textContent: `${l.day.slice(5)} · ${l.text}` })))];
+}
+
+// ---------- Top bar ----------
+$('voice').onclick = () => { voiceOn = !voiceOn; $('voice').textContent = voiceOn ? 'Voice on' : 'Voice off'; $('voice').setAttribute('aria-pressed', voiceOn); if (voiceOn) say($('lineSr').textContent); else speechSynthesis?.cancel(); };
+$('week').onclick = () => act('home', '/api/day', { days: 7 }, (s) => say(alertFor(s) || `A week later. It's ${s.day}, and nothing's running low.`));
+$('reset').onclick = () => { if (confirm('Start over? Bea forgets everything here, including the PayPal link.')) act('home', '/api/reset'); };
+
+drawRoom();
+fetch('/api/state').then((r) => r.json()).then((s) => { render(s); walk('home'); lastLogAt = s.log[0]?.at; say(lineFor(s)); });
+</script>
+</body>
+</html>

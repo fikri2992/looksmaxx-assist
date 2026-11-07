@@ -123,7 +123,7 @@ async function ppToken() {
   return token.value;
 }
 
-async function pp(path, method = 'GET', body, requestId) {
+export async function pp(path, method = 'GET', body, requestId) {
   for (let attempt = 1; ; attempt++) {
     const res = await fetch(`${PP}${path}`, {
       method,
