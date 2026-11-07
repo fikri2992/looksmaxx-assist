@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { Banner, Button, Card, Chip, Empty, Glyph, LifeBar, Screen, Section, T } from '@/components/ui';
+import { Banner, Button, Card, Chip, Empty, Glyph, LifeBar, plural, Screen, Section, T } from '@/components/ui';
 import { Radius, Spacing, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore, type CheckIn, type Item, type SkinTrait } from '@/lib/api';
@@ -23,7 +23,13 @@ export default function Skin() {
   const [pm, setPm] = useState<string[]>([]);
   const [feel, setFeel] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
-  useEffect(() => { setAm(entry?.am ?? []); setPm(entry?.pm ?? []); setFeel(entry?.feel ?? null); setNotes(entry?.notes ?? ''); }, [entry?.id, entry?.am?.length, entry?.pm?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  // When today's saved entry changes (saved here or by the agent), reload the form from it during render.
+  const entryKey = entry ? `${entry.id}:${entry.am?.length}:${entry.pm?.length}` : '';
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  if (loadedKey !== entryKey) {
+    setLoadedKey(entryKey);
+    setAm(entry?.am ?? []); setPm(entry?.pm ?? []); setFeel(entry?.feel ?? null); setNotes(entry?.notes ?? '');
+  }
   const todayDone = checkins.some((c) => c.live && c.at.slice(0, 10) === todayIso());
 
   const take = async (source: 'camera' | 'library') => {
@@ -64,7 +70,7 @@ export default function Skin() {
         </Card>
       </Section>
 
-      <Section title="What works on you" hint={state?.insights ? `${state.insights.note} Based on ${state.insights.days} days.` : 'Builds up from your diary and check-ins.'}>
+      <Section title="What works on you" hint={state?.insights ? `${state.insights.note} Based on ${plural(state.insights.days, 'day')}.` : 'Builds up from your diary and check-ins.'}>
         <Card>
           {state?.insights?.results.length ? state.insights.results.map((r) => {
             const tone = r.verdict === 'seems to help' ? 'buy' : r.verdict === 'seems to hurt' ? 'veto' : 'textSecondary';
@@ -72,7 +78,7 @@ export default function Skin() {
               <View key={r.itemId} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }} accessibilityLabel={`${r.name}: ${r.verdict}`}>
                 <View style={{ flex: 1 }}>
                   <T variant="medium" numberOfLines={1}>{r.name}</T>
-                  <T variant="small" tone="textSecondary">{`Used ${r.usedDays} days, not used ${r.otherDays}`}</T>
+                  <T variant="small" tone="textSecondary">{`Used ${plural(r.usedDays, 'day')}, not used ${r.otherDays}`}</T>
                 </View>
                 <T variant="bold" tone={tone} style={{ fontSize: 14 }}>{r.verdict}</T>
               </View>

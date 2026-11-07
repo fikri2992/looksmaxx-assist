@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
 import { Banner, Button, Card, Glyph, Screen, Section, T } from '@/components/ui';
@@ -17,7 +17,12 @@ export default function Scan() {
   const [keep, setKeep] = useState<Record<string, boolean>>({});
   const [err, setErr] = useState<string | null>(null);
   const [receipt, setReceipt] = useState('');
-  useEffect(() => { setKeep(Object.fromEntries(drafts.map((d) => [d.id, d.keep]))); }, [drafts.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  // New drafts arrived: start from the model's keep/drop guess, adjusted during render.
+  const [seenDrafts, setSeenDrafts] = useState(-1);
+  if (seenDrafts !== drafts.length) {
+    setSeenDrafts(drafts.length);
+    setKeep(Object.fromEntries(drafts.map((d) => [d.id, d.keep])));
+  }
 
   const scan = async (source: 'camera' | 'library') => {
     setErr(null);

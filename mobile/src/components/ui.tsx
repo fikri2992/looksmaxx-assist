@@ -10,6 +10,9 @@ import { VERDICT_LABEL, useStore, type Category } from '@/lib/api';
 
 export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
+// "1 day", "3 days": counts read naturally on screen and to screen readers.
+export const plural = (n: number, word: string, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;
+
 export function Screen({ children, title, kicker, right }: { children: ReactNode; title: string; kicker?: string; right?: ReactNode }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -116,7 +119,7 @@ export function Sparkline({ values, now, width = 150, height = 36 }: { values: n
   const y = (v: number) => height - 4 - ((v - lo) / span) * (height - 8);
   const pts = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
   return (
-    <Svg width={width} height={height} accessibilityLabel={`Price over ${values.length} days, from $${lo} to $${hi}`}>
+    <Svg width={width} height={height} accessibilityLabel={`Price over ${plural(values.length, 'day')}, from $${lo} to $${hi}`}>
       <Polyline points={pts} fill="none" stroke={t.textSecondary} strokeWidth={1.5} />
       {now != null ? <Circle cx={x(values.length - 1)} cy={y(now)} r={3.5} fill={t.accent} /> : null}
     </Svg>
@@ -144,7 +147,7 @@ export function LifeBar({ daysLeft, life }: { daysLeft: number | null; life: num
       <View style={{ height: 6, borderRadius: 3, backgroundColor: t.backgroundElement, overflow: 'hidden' }}>
         <View style={{ width: `${Math.max(4, f * 100)}%`, height: '100%', backgroundColor: tone }} />
       </View>
-      <T variant="small" tone="textSecondary">{daysLeft <= 0 ? 'Probably empty' : `About ${daysLeft} days left`}</T>
+      <T variant="small" tone="textSecondary">{daysLeft <= 0 ? 'Probably empty' : `About ${plural(daysLeft, 'day')} left`}</T>
     </View>
   );
 }
