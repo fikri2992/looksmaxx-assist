@@ -14,7 +14,7 @@ export type Item = {
   opened?: string | null; status: 'active' | 'low' | 'finished'; source: string; createdAt: string;
   daysLeft: number | null; life: number | null; basis: string;
   afterOpening?: { months: number; useBy: string; daysToUseBy: number; past: boolean; basis: string } | null;
-  photoId?: string | null; wears?: string[]; shade?: string | null; finish?: string | null; season?: string | null; occasion?: string | null;
+  photoId?: string | null; paoMonths?: number | null; wears?: string[]; shade?: string | null; finish?: string | null; season?: string | null; occasion?: string | null;
 };
 export type Memory = { id: string; at: string; text: string; kind: string; source: string };
 export type DiaryEntry = { id: string; date: string; am?: string[]; pm?: string[]; feel?: string | null; notes?: string };
