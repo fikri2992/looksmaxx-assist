@@ -12,7 +12,7 @@ const { movers, historyFor, summarize } = await import('./lib/prices.mjs');
 const { weatherToday } = await import('./lib/weather.mjs');
 const { modelSpend } = await import('./lib/models.mjs');
 const { runTests } = await import('./lib/policy.mjs');
-const { converse } = await import('./lib/agent.mjs');
+const { converse, createLook } = await import('./lib/agent.mjs');
 const { savePhoto, readPhoto } = await import('./lib/photos.mjs');
 const { transcribe, speak, spentToday } = await import('./lib/openai.mjs');
 
@@ -74,9 +74,11 @@ const routes = {
     const heard = await transcribe(audio, body.mime || 'audio/m4a', Number(body.seconds) || 30);
     if (!heard.trim()) return { heard: '', reply: "I didn't catch that." };
     const r = await converse(heard, db, { voice: true });
-    const mp3 = await speak(r.reply);
-    return { heard, ...r, audio: `data:audio/mpeg;base64,${mp3.toString('base64')}` };
+    // Served as a file: data URIs aren't reliably playable on every platform.
+    const audioUrl = `/photos/${await savePhoto(await speak(r.reply), 'mp3')}`;
+    return { heard, ...r, audioUrl };
   }),
+  'POST /api/looks': (req, res, body) => exclusive(res, 'Styling a look', async () => { await createLook(db, body.itemIds || [], body.note || ''); }),
   'GET /api/openai/spend': async (req, res) => send(res, 200, { today: await spentToday(), cap: Number(process.env.OPENAI_DAILY_CAP || 10) }),
   'DELETE /api/items': async (req, res, body) => { db.items = db.items.filter((i) => i.id !== body.id); await save(); send(res, 200, view()); },
 
@@ -173,7 +175,7 @@ createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204, '');
   if (url.pathname === '/ledger') return send(res, 200, await readFile(path.join(repoRoot, 'web', 'ledger.html')).catch(() => 'ledger not built yet'), 'text/html; charset=utf-8');
   if (url.pathname.startsWith('/photos/')) {
-    try { const name = url.pathname.split('/').pop(); return send(res, 200, await readPhoto(name), name.endsWith('png') ? 'image/png' : 'image/jpeg'); }
+    try { const name = url.pathname.split('/').pop(); return send(res, 200, await readPhoto(name), { png: 'image/png', mp3: 'audio/mpeg' }[name.split('.').pop()] || 'image/jpeg'); }
     catch { return send(res, 404, { error: 'no such photo' }); }
   }
   if (url.pathname.startsWith('/api/prices/history/')) {

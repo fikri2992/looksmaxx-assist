@@ -43,6 +43,20 @@ export const TOOLS = [
   fn('check_purchase', 'Ask the buying engine whether to buy something. It searches real products and applies the tested rules.', { need: S, query: { type: 'string', description: 'one concrete product search' }, category: CATEGORY, type: S, must_be: S }, ['need', 'query', 'category', 'type']),
 ];
 
+// A look image from owned items: edits from their real photos when there are any, otherwise from words.
+export async function createLook(db, itemIds, note = '') {
+  const items = itemIds.map((iid) => db.items.find((i) => i.id === iid)).filter(Boolean);
+  if (!items.length) throw new Error('no matching items');
+  const refs = [];
+  for (const i of items.filter((x) => x.photoId)) refs.push({ bytes: await readPhoto(i.photoId), type: i.photoId.endsWith('png') ? 'image/png' : 'image/jpeg' });
+  const prompt = `${refs.length ? 'Using the reference photos of these exact items,' : 'Create'} an editorial flat-lay styling image of this look on a warm neutral background, no people, no text, no logos. Show only these items and nothing else, no added shoes, bags or accessories, since the person owns only these: ${items.map((i) => `${i.color ? `${i.color} ` : ''}${i.name} (${i.type})`).join('; ')}.${note ? ` Style: ${note}.` : ''}`;
+  const photoId = await savePhoto(await makeImage(prompt, refs), 'png');
+  const look = { id: id('look'), at: now(), itemIds: items.map((i) => i.id), photoId, note, fromPhotos: refs.length };
+  db.looks.unshift(look);
+  log('look', `Made a look from ${items.length} items${refs.length ? `, using ${refs.length} of your photos` : ''}.`);
+  return look;
+}
+
 async function runTool(name, args, db, ctx) {
   const find = (iid) => db.items.find((i) => i.id === iid);
   switch (name) {
@@ -90,17 +104,9 @@ async function runTool(name, args, db, ctx) {
       return { ok: true, summary: entry.activatedAt ? `New rule v${entry.version} is live after ${entry.testResults.length} tests passed` : `My proposed rule failed its tests, so the old rules stay`, ruleVersion: entry.version, live: !!entry.activatedAt };
     }
     case 'create_look': {
-      const items = (args.item_ids || []).map(find).filter(Boolean);
-      if (!items.length) return { ok: false, error: 'no matching items' };
-      const refs = [];
-      for (const i of items.filter((x) => x.photoId)) refs.push({ bytes: await readPhoto(i.photoId), type: i.photoId.endsWith('png') ? 'image/png' : 'image/jpeg' });
-      const prompt = `${refs.length ? 'Using the reference photos of these exact items,' : 'Create'} an editorial flat-lay styling image of this look on a warm neutral background, no people, no text, no logos: ${items.map((i) => `${i.color ? `${i.color} ` : ''}${i.name} (${i.type})`).join('; ')}.${args.style_note ? ` Style: ${args.style_note}.` : ''}`;
-      const png = await makeImage(prompt, refs);
-      const photoId = await savePhoto(png, 'png');
-      const look = { id: id('look'), at: now(), itemIds: items.map((i) => i.id), photoId, note: args.style_note || '', fromPhotos: refs.length };
-      db.looks.unshift(look);
-      ctx.attachments.push({ kind: 'look', lookId: look.id, photoId });
-      return { ok: true, summary: `Made a look from ${items.length} items${refs.length ? ` using ${refs.length} of your photos` : ''}` };
+      const look = await createLook(db, args.item_ids || [], args.style_note);
+      ctx.attachments.push({ kind: 'look', lookId: look.id, photoId: look.photoId });
+      return { ok: true, summary: `Made a look from ${look.itemIds.length} items${look.fromPhotos ? ` using ${look.fromPhotos} of your photos` : ''}` };
     }
     case 'check_purchase': {
       const d = await decide({ need: args.need, query: args.query, category: args.category, type: args.type, mustBe: args.must_be || args.need }, db);

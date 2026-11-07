@@ -17,6 +17,6 @@ export async function savePhoto(dataUrlOrBuffer, ext = 'jpg') {
 }
 
 export async function readPhoto(id) {
-  if (!/^[a-f0-9-]{12}\.(jpg|png)$/.test(id)) throw new Error('bad photo id');
+  if (!/^[a-f0-9-]{12}\.(jpg|png|mp3)$/.test(id)) throw new Error('bad photo id');
   return readFile(path.join(dir(), id));
 }
