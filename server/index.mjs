@@ -19,6 +19,8 @@ const { transcribe, speak, spentToday } = await import('./lib/openai.mjs');
 
 const port = Number(process.argv[2]) || Number(process.env.PORT) || 8095;
 const baseUrl = process.env.PUBLIC_URL || `http://localhost:${port}`;
+const { restoreDemoIfEmpty, restoreDemo, hasDemo } = await import('./lib/demo.mjs');
+if (await restoreDemoIfEmpty()) console.log('Started from the demo bundle in server/demo');
 const db = await load();
 
 const send = (res, status, body, type = 'application/json') => {
@@ -200,7 +202,8 @@ const routes = {
   'GET /api/prices/observatory': async (req, res) => send(res, 200, await observatory()),
   'GET /api/weather': async (req, res) => send(res, 200, await weatherToday(db.settings.location.lat, db.settings.location.lon)),
   'GET /api/policy/tests': async (req, res) => send(res, 200, runTests(activePolicy())),
-  'POST /api/reset': async (req, res) => { reset(); await save(); await prunePhotos(db); send(res, 200, view()); },
+  // On a public demo, reset goes back to the demo persona rather than an empty app.
+  'POST /api/reset': async (req, res) => { reset(process.env.PUBLIC_DEMO && hasDemo() ? await restoreDemo() : undefined); await save(); await prunePhotos(db); send(res, 200, view()); },
 };
 
 // The exported web app (npm run build:web) is served from the same origin, so judges need one URL and no install.

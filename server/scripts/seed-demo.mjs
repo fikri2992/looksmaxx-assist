@@ -1,6 +1,6 @@
 // Seeds the demo persona through the real API, so every decision on screen was made by the real engine.
 // Everything seeded is labelled "demo data"; face photos are generated images of a fictional person, and
-// clothing photos are generated once and cached in server/data/seed-photos so reseeding costs nothing.
+// clothing photos are generated once and cached in server/demo/seed-photos so reseeding costs nothing.
 // Usage: node server/scripts/seed-demo.mjs [http://localhost:8095] [--no-photos]
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -17,7 +17,7 @@ const call = async (method, route, body) => {
 };
 const daysAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
 const dataUrl = (bytes, type) => `data:${type};base64,${bytes.toString('base64')}`;
-const photoCache = path.join(repoRoot, 'server', 'data', 'seed-photos');
+const photoCache = path.join(repoRoot, 'server', 'demo', 'seed-photos');
 
 async function productPhoto(key, description) {
   const file = path.join(photoCache, `${key}.jpg`);
@@ -70,11 +70,11 @@ for (let n = 12; n >= 1; n--) {
 }
 console.log('✔ 12 diary days');
 
-const fixtures = 'experiments/face-measure/public/fixtures/skin-sequence-v1';
-for (const [frame, ago] of [['frame-01.png', 9], ['frame-04.png', 3]]) {
+const fixtures = 'server/demo/faces'; // generated portraits of a fictional adult
+for (const [frame, ago] of [['frame-01.jpg', 9], ['frame-04.jpg', 3]]) {
   const bytes = await readFile(path.join(repoRoot, fixtures, frame)).catch(() => null);
   if (!bytes) { console.warn(`  ! missing ${frame}`); continue; }
-  const s = await call('POST', '/api/checkin', { image: dataUrl(bytes, 'image/png'), seeded: true, at: daysAgo(ago) });
+  const s = await call('POST', '/api/checkin', { image: dataUrl(bytes, 'image/jpeg'), seeded: true, at: daysAgo(ago) });
   console.log(`✔ check-in ${frame}: ${(s.checkins?.find((c) => c.at.startsWith(daysAgo(ago)))?.reading?.skin || []).map((x) => `${x.trait}=${x.level}`).join(', ')}`);
 }
 

@@ -52,11 +52,14 @@ Needs Node 22+ and, for the APK, JDK 17 and the Android SDK.
 
 ```sh
 cp .env.example .env.local      # PayPal sandbox keys, OpenAI key; Channel3 works without a key
-npm start                        # API server on http://localhost:8095
-npm run seed                     # demo persona, made by the real engine (labelled demo data)
+npm start                        # API server on http://localhost:8095, starts from the demo bundle
 npm run build:web                # web app, then open http://localhost:8095
-npm test                         # rule language, engine and analysis tests
+npm test                         # rule language, engine, analysis and agent tests
 ```
+
+A fresh clone starts from `server/demo`: the seeded persona, its photos, and a copy of our price log, so nothing needs to be generated or paid for. To rebuild the persona with the real engine, run `npm run seed` (a few cents of model calls), then `npm run demo:bundle`.
+
+- **Hosted demo:** `render.yaml` deploys the server, web app and ledger as one Render service. Add the secrets in the dashboard and set `PUBLIC_URL` to the service URL. With `PUBLIC_DEMO=1`, a reset returns to the demo persona, and `OPENAI_DAILY_CAP` keeps public model spend low.
 
 - **Android:** set `EXPO_PUBLIC_API_URL=http://<your-pc-ip>:8095` in `mobile/.env.local`, then `npm run apk` (Windows-friendly: builds from a short path to avoid path-length limits). The APK lands in `dist/shelfie.apk`.
 - **Ledger:** http://localhost:8095/ledger
@@ -65,7 +68,7 @@ npm test                         # rule language, engine and analysis tests
 ## Honest limits
 
 - PayPal sandbox only, simulated money. Delivery isn't part of the demo.
-- Demo data is labelled in the app. Face samples are generated images of a fictional person.
+- Demo data is labelled in the app. Face samples are generated images of a fictional person. The bundled price log is a copy; the live one grows daily on our logging machine.
 - Skin readings describe appearance only, never diagnose, and can shift with lighting; the app says so. Selfies go only to the vision model and aren't stored; only the text reading is.
 - Product photos sent for search are crops, never faces.
 - Channel3 mostly covers US stores in USD.
@@ -78,6 +81,7 @@ PayPal Orders v2 (vault, authorize, capture, void, refund) · Channel3 · OpenAI
 ## Repo
 
 - `server/`: API, agent, rules, PayPal, Channel3, price log, tests
+- `server/demo/`: the demo bundle (persona snapshot, photos, price log copy, generated faces)
 - `mobile/`: the Expo app (Android and web)
 - `web/ledger.html`: AG Grid ledger
 - `scripts/`: APK and web builds
