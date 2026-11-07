@@ -75,10 +75,13 @@ export async function makeImage(prompt, references = []) {
     form.append('model', OPENAI.image);
     form.append('prompt', prompt);
     form.append('size', '1024x1536');
+    form.append('output_format', 'jpeg');
+    form.append('output_compression', '80');
     for (const [i, r] of references.slice(0, 6).entries()) form.append('image[]', new Blob([r.bytes], { type: r.type || 'image/jpeg' }), `ref-${i}.jpg`);
     res = await post('/images/edits', form, { form: true });
   } else {
-    res = await post('/images/generations', { model: OPENAI.image, prompt, size: '1024x1536' });
+    // JPEG keeps photos around 100 KB instead of 2 MB PNGs, which matters on phones.
+    res = await post('/images/generations', { model: OPENAI.image, prompt, size: '1024x1536', output_format: 'jpeg', output_compression: 80 });
   }
   const j = await res.json();
   await charge(PRICE.image, 'image');

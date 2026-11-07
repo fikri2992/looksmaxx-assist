@@ -14,7 +14,7 @@ const { modelSpend } = await import('./lib/models.mjs');
 const { runTests } = await import('./lib/policy.mjs');
 const { converse, createLook } = await import('./lib/agent.mjs');
 const { whatWorks } = await import('./lib/insights.mjs');
-const { savePhoto, readPhoto } = await import('./lib/photos.mjs');
+const { savePhoto, readPhoto, prunePhotos } = await import('./lib/photos.mjs');
 const { transcribe, speak, spentToday } = await import('./lib/openai.mjs');
 
 const port = Number(process.argv[2]) || Number(process.env.PORT) || 8095;
@@ -200,7 +200,7 @@ const routes = {
   'GET /api/prices/observatory': async (req, res) => send(res, 200, await observatory()),
   'GET /api/weather': async (req, res) => send(res, 200, await weatherToday(db.settings.location.lat, db.settings.location.lon)),
   'GET /api/policy/tests': async (req, res) => send(res, 200, runTests(activePolicy())),
-  'POST /api/reset': async (req, res) => { reset(); await save(); send(res, 200, view()); },
+  'POST /api/reset': async (req, res) => { reset(); await save(); await prunePhotos(db); send(res, 200, view()); },
 };
 
 // The exported web app (npm run build:web) is served from the same origin, so judges need one URL and no install.
