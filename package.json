@@ -10,6 +10,7 @@
     "test": "node --test \"server/test/**/*.test.mjs\"",
     "payment-gate": "node server/scripts/payment-gate.mjs",
     "web": "npm --prefix mobile run web",
+    "build:web": "node scripts/build-web.mjs",
     "apk": "bash scripts/build-apk.sh"
   }
 }

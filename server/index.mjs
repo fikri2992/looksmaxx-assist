@@ -173,6 +173,19 @@ const routes = {
   'POST /api/reset': async (req, res) => { reset(); await save(); send(res, 200, view()); },
 };
 
+// The exported web app (npm run build:web) is served from the same origin, so judges need one URL and no install.
+const appDir = path.join(repoRoot, 'mobile', 'dist');
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.map': 'application/json' };
+async function serveApp(res, pathname) {
+  const file = path.normalize(path.join(appDir, decodeURIComponent(pathname)));
+  if (!file.startsWith(appDir)) return send(res, 403, { error: 'forbidden' });
+  const body = await readFile(file).catch(() => null);
+  if (body && path.extname(file)) return send(res, 200, body, TYPES[path.extname(file)] || 'application/octet-stream');
+  // Client-side routes fall back to the app shell.
+  const shell = await readFile(path.join(appDir, 'index.html')).catch(() => null);
+  return shell ? send(res, 200, shell, 'text/html; charset=utf-8') : send(res, 404, { error: 'Web app not built. Run: npm run build:web' });
+}
+
 createServer(async (req, res) => {
   const url = new URL(req.url, baseUrl);
   if (req.method === 'OPTIONS') return send(res, 204, '');
@@ -203,6 +216,7 @@ createServer(async (req, res) => {
   }
   if (url.pathname === '/paypal/cancel') { db.settings.pendingOrder = null; log('approve', 'PayPal approval cancelled. Nothing was charged.'); await save(); res.writeHead(302, { location: '/ledger' }); return res.end(); }
   const handler = routes[`${req.method} ${url.pathname}`];
+  if (!handler && req.method === 'GET' && !url.pathname.startsWith('/api/')) return serveApp(res, url.pathname);
   if (!handler) return send(res, 404, { error: 'not found' });
   const body = req.method === 'GET' ? {} : await bodyOf(req).catch(() => ({}));
   try { await handler(req, res, body); } catch (e) { console.error(e); send(res, 500, { error: e.message }); }
