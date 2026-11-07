@@ -170,6 +170,15 @@ async function runTool(name, args, db, ctx) {
   }
 }
 
+// Instructions for the GPT-Live voice front. It talks; anything that needs the person's data or an action is
+// delegated to converse() below, so the voice model never acts or decides money on its own.
+export async function liveInstructions(db) {
+  const weather = await weatherToday(db.settings.location.lat, db.settings.location.lon).then((w) => w[0]).catch(() => null);
+  return `You are the voice of Shelfie, a personal agent for one person's wardrobe, skincare and makeup. Speak briefly and warmly, one or two sentences.
+Delegate to the backend whenever the person asks about what they own, their skin or diary, purchases, prices, money, memory or preferences, or asks you to add, log, remember, buy, watch or refund anything. Never claim something was done until the backend says so. Never diagnose skin conditions.
+For small talk you may answer directly. Today: ${day()}. Weather (${db.settings.location.label}): ${weather ? `UV ${weather.uvMax}, humidity ${weather.humidity}%, feels ${weather.feelsMax}°C` : 'unknown'}. They own ${db.items.length} things; ${db.memories.length} memories are saved.`;
+}
+
 export async function converse(text, db, { voice = false } = {}) {
   const weather = await weatherToday(db.settings.location.lat, db.settings.location.lon).then((w) => w[0]).catch(() => null);
   const history = db.chat.slice(-12).map((m) => ({ role: m.role, content: m.text }));

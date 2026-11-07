@@ -3,7 +3,7 @@ import { useAudioPlayer } from 'expo-audio';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Banner, Button, plural, Stamp, T } from '@/components/ui';
@@ -52,6 +52,10 @@ export default function AgentChat() {
           <Text style={[styles.title, { color: t.text }]}>Your agent</Text>
           <T variant="small" tone="textSecondary">{`Knows ${plural(state?.items.length ?? 0, 'thing')} you own · ${plural(state?.memories.length ?? 0, 'memory', 'memories')} · rules v${state?.policy.version ?? 1}`}</T>
         </View>
+        {/* GPT-Live call runs on a web page (browser WebRTC); on the phone it opens in the browser and needs an https server. */}
+        <Pressable onPress={() => (Platform.OS === 'web' ? window.location.assign('/live') : Linking.openURL(`${API_URL}/live`))} accessibilityRole="button" accessibilityLabel="Live voice call" style={[styles.iconBtn, { borderColor: t.line }]}>
+          <MaterialCommunityIcons name="phone-in-talk-outline" size={20} color={t.text} />
+        </Pressable>
         <Pressable onPress={() => router.push('/rules')} accessibilityRole="button" accessibilityLabel="Rules and memory" style={[styles.iconBtn, { borderColor: t.line }]}>
           <MaterialCommunityIcons name="brain" size={20} color={t.text} />
         </Pressable>

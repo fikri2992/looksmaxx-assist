@@ -22,7 +22,7 @@ Closet apps track what you own but never buy. Skincare apps log reactions but ne
 | **Closet** | Photo grid, wear counts, "you own 4 black tops" warnings, and looks styled from your real pieces with gpt-image. |
 | **Skin** | Daily check-in, morning and evening products, how your skin feels, and **what works on you**: each product compared on days used versus not used. |
 | **Makeup** | Shade palette, open dates, the last look the agent saw. |
-| **Agent** | Chat or hold-to-talk. It acts through tools: adds items, logs the diary, remembers preferences, turns a reaction into a tested rule, styles looks, checks purchases. |
+| **Agent** | Chat, hold-to-talk, or a **live voice call** (GPT-Live 1 over WebRTC at `/live`: the voice model talks and hands every action to the same agent). It acts through tools: adds items, logs the diary, remembers preferences, turns a reaction into a tested rule, styles looks, checks purchases, watches prices, answers money questions and prepares refunds you confirm. |
 | **Ledger** | `/ledger` on the server: every decision with its price history, rule and PayPal trail, a 112-product price observatory, and how the rules changed. Built with AG Grid. |
 
 Getting things in: one photo of a shelf or rail (the model reads it, you confirm), a pasted receipt or order email, or just telling the agent.
@@ -64,6 +64,7 @@ A fresh clone starts from `server/demo`: the seeded persona, its photos, and a c
 
 - **Android:** set `EXPO_PUBLIC_API_URL=http://<your-pc-ip>:8095` in `mobile/.env.local`, then `npm run apk` (Windows-friendly: builds from a short path to avoid path-length limits). The APK lands in `dist/shelfie.apk`.
 - **Ledger:** http://localhost:8095/ledger
+- **Live voice:** http://localhost:8095/live (the microphone needs localhost or https, so on a phone use the hosted URL)
 - **PayPal:** the first purchase opens PayPal for one approval with a sandbox buyer. Set `STORE_SANDBOX_EMAIL` to a second sandbox Business account to pay a separate store; without it, the demo pays the app's own sandbox merchant and says so.
 
 ## Honest limits
@@ -77,7 +78,7 @@ A fresh clone starts from `server/demo`: the seeded persona, its photos, and a c
 
 ## Built with
 
-PayPal Orders v2 (vault, authorize, capture, void, refund) · Channel3 · OpenAI GPT-6 Luna, gpt-image, speech · Open-Meteo · AG Grid Community · Expo / React Native.
+PayPal Orders v2 (vault, authorize, capture, void, refund) · Channel3 · OpenAI GPT-6 Luna, GPT-Live 1, gpt-image, speech · Open-Meteo · AG Grid Community · Expo / React Native.
 
 ## Repo
 
