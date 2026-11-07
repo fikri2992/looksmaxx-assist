@@ -16,7 +16,7 @@ export default function Skin() {
   const t = useTheme();
   const { state, act } = useStore();
   const [err, setErr] = useState<string | null>(null);
-  const products = (state?.items ?? []).filter((i) => i.category === 'skincare');
+  const products = (state?.items ?? []).filter((i) => i.category === 'skincare').sort((a, b) => Number(!!b.afterOpening?.past) - Number(!!a.afterOpening?.past));
   const checkins = state?.checkins ?? [];
   const entry = state?.diary.find((d) => d.date === todayIso());
   const [am, setAm] = useState<string[]>([]);
