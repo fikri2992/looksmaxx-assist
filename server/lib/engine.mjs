@@ -202,12 +202,18 @@ export async function execute(decision, db) {
   const auth = await authorizeWithVault(db.settings.vaultId, { description: decision.product.title, amount: decision.product.price, customId: decision.id, payeeEmail });
   decision.paypal = { orderId: auth.orderId, authId: auth.authId, authorizedAt: now(), authorized: decision.product.price, payee: payeeLabel() };
   log('authorize', `Authorized $${decision.product.price} for ${decision.product.title}. Running the final check.`, { decisionId: decision.id });
-  // Final check, minutes later: live price and details, then the same policy again.
+  return settle(decision, auth.authId, db);
+}
+
+// Final check on an authorized hold, then capture or void. Used for every purchase, the first one approved in
+// PayPal included. A purchase you approved yourself (an "ask" you said yes to) passes unless the rules now
+// skip it or the price went up; otherwise the rules must still say buy.
+export async function settle(decision, authId, db) {
   const live = await productDetails(decision.product.id).catch(() => null);
   const offer = live?.offers?.find((o) => o.store === decision.product.store);
   if (!offer) {
     // No live listing from this store to check against: release the hold rather than pay on an old price.
-    await voidAuthorization(auth.authId);
+    await voidAuthorization(authId);
     decision.finalCheck = { at: now(), livePrice: null, verdict: 'wait', reasons: [{ rule: 'no-live-price', then: 'wait', because: 'Could not confirm today’s price at this store.' }] };
     Object.assign(decision.paypal, { voidedAt: now(), status: 'voided' });
     log('void', 'Final check could not confirm today’s price at the store. Released the hold; nothing was charged.', { decisionId: decision.id });
@@ -216,12 +222,13 @@ export async function execute(decision, db) {
   const { facts } = await factsFor({ product: { ...decision.product, description: live?.description }, offer, need: decision.need, db, weather: decision.weather, exclude: [decision.id, decision.followsUp].filter(Boolean) });
   const recheck = evaluate(activePolicy(), facts);
   decision.finalCheck = { at: now(), livePrice: offer.price, verdict: recheck.verdict, reasons: recheck.reasons };
-  if (recheck.verdict === 'buy' && offer.price <= decision.product.price) {
-    const cap = await captureAuthorization(auth.authId, offer.price);
+  const passes = decision.approvedBy === 'you' ? recheck.verdict !== 'veto' : recheck.verdict === 'buy';
+  if (passes && offer.price <= decision.product.price) {
+    const cap = await captureAuthorization(authId, offer.price);
     Object.assign(decision.paypal, { captureId: cap.captureId, capturedAt: now(), amount: offer.price, status: 'captured' });
     log('capture', `Final check passed. Paid $${offer.price} to the store. PayPal capture ${cap.captureId}.`, { decisionId: decision.id });
   } else {
-    await voidAuthorization(auth.authId);
+    await voidAuthorization(authId);
     Object.assign(decision.paypal, { voidedAt: now(), status: 'voided' });
     log('void', `Final check failed (${recheck.reasons.map((r) => r.because).join(' ')}). Released the hold; nothing was charged.`, { decisionId: decision.id });
   }
