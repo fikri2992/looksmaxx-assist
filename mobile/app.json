@@ -40,6 +40,12 @@
           "cameraPermission": "Shelfie uses the camera for shelf photos and your daily check-in.",
           "photosPermission": "Shelfie reads the photos you choose."
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Shelfie uses the microphone when you hold the talk button to speak to your agent."
+        }
       ]
     ],
     "experiments": {

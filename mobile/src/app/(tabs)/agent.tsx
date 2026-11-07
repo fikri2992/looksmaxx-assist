@@ -1,116 +1,145 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useAudioPlayer } from 'expo-audio';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, Screen, Section, Stamp, T } from '@/components/ui';
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Banner, Stamp, T } from '@/components/ui';
+import { MaxContentWidth, Radius, Spacing, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useStore, type PolicyVersion, type Rule } from '@/lib/api';
+import { API_URL, mediaUrl, useStore, type ChatMessage } from '@/lib/api';
+import { useVoiceNote } from '@/lib/voice';
 
-// Plain words for the rule language, so anyone can read what the agent will do.
-const FACT_WORDS: Record<string, string> = {
-  'user.avoidHit': 'it contains something you reacted to', 'need.ownedCovering': 'you already own something that covers it',
-  'price.vsLow': 'price ÷ its recent low', 'price.days': 'days of price history', 'need.daysLeft': 'days until you run out',
-  'product.price': 'price', 'product.wasPrice': 'the “was” price', 'product.title': 'the product name', 'product.inStock': 'in stock',
-  'weather.uvMax': 'today’s UV', 'weather.humidity': 'humidity', 'budget.monthLeft': 'budget left this month', 'rules.askAbove': 'your per-item limit', 'price.high': 'its recent high',
-};
-const OP_WORDS: Record<string, string> = { lt: '<', lte: '≤', gt: '>', gte: '≥', eq: '=', is: 'is', contains: 'contains', notEmpty: '', empty: 'is empty', gtFact: '>', ltFact: '<' };
+const STARTERS = ['What should I wear today?', 'I used the gel cleanser and moisturizer this morning', 'Do I need more sunscreen?', 'Make a look for a work dinner from my closet'];
 
-export default function Agent() {
+export default function AgentChat() {
   const t = useTheme();
-  const { state, act } = useStore();
-  const [say, setSay] = useState('');
-  const versions = [...(state?.policyVersions ?? [])].reverse();
+  const insets = useSafeAreaInsets();
+  const { state, busy, error, act } = useStore();
+  const [text, setText] = useState('');
+  const [voiceErr, setVoiceErr] = useState<string | null>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
+  const voice = useVoiceNote();
+  const player = useAudioPlayer(null);
+  const messages = state?.chat ?? [];
+
+  useEffect(() => { setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 50); }, [messages.length, busy]);
+
+  const send = async (msg = text) => {
+    if (!msg.trim()) return;
+    setText('');
+    await act('Thinking', '/api/agent', { text: msg });
+  };
+
+  const talk = async () => {
+    setVoiceErr(null);
+    try {
+      if (!voice.recording) return voice.start();
+      const clip = await voice.stop();
+      if (!clip || clip.seconds < 0.5) return;
+      // The transcript lands in the chat as your message; the reply is spoken back.
+      const r = await act('Listening', '/api/voice', clip);
+      if (r?.audioUrl) { player.replace({ uri: `${API_URL}${r.audioUrl}` }); player.play(); }
+    } catch (e) { setVoiceErr(e instanceof Error ? e.message : String(e)); }
+  };
 
   return (
-    <Screen title="Agent" kicker={`Rules v${state?.policy.version ?? 1} · ${state?.policy.rules.length ?? 0} rules`}>
-      <Section title="Tell your agent" hint="Reactions, what’s running out, what you like. A reaction becomes a rule, tested before it goes live.">
-        <Card>
-          <TextInput value={say} onChangeText={setSay} multiline placeholder="The vitamin C serum stung my cheek. My moisturizer is almost gone." placeholderTextColor={t.textSecondary}
-            accessibilityLabel="Tell your agent" style={[styles.input, { color: t.text, backgroundColor: t.background, borderColor: t.line }]} />
-          <Button label="Remember this" icon="brain" disabled={!say.trim()} onPress={async () => { await act('Remembering and writing a rule', '/api/remember', { text: say }); setSay(''); }} />
-        </Card>
-      </Section>
-
-      <Section title="Money" hint="Sandbox: simulated money only.">
-        <Card>
-          <Row icon={state?.settings.hasPaypal ? 'check-circle' : 'circle-outline'} tone={state?.settings.hasPaypal ? 'buy' : 'ask'} text={state?.settings.hasPaypal ? 'PayPal linked. The agent can buy within your rules.' : 'Not linked yet. The first purchase asks you to approve once in PayPal.'} />
-          <Row icon="cash-lock" tone="ask" text={`Buys alone under $${state?.settings.rules.askAbove ?? 40} an item and $${state?.settings.rules.monthlyBudget ?? 120} a month. Anything else, it asks.`} />
-          <Row icon="store-check-outline" tone="ask" text="It authorizes at purchase time, re-checks the live price, then pays the store or releases the hold. Shelfie never holds your money." />
-        </Card>
-      </Section>
-
-      <Section title="How its rules changed" hint="Each version only went live after its tests passed.">
-        {versions.map((v) => <VersionCard key={v.version} v={v} />)}
-      </Section>
-
-      <Section title={`Current rules (v${state?.policy.version ?? 1})`}>
-        <Card>{(state?.policy.rules ?? []).map((r) => <RuleRow key={r.id} r={r} />)}</Card>
-      </Section>
-
-      <Section title="Watch jobs" hint="When it decides to wait, it writes itself a job that fires when the price drops."
-        action={state?.watchJobs.length ? <Button kind="quiet" label="Run now" onPress={() => act('Checking watched prices', '/api/watch/run')} /> : null}>
-        {state?.watchJobs.length ? state.watchJobs.map((j) => (
-          <Card key={j.id}>
-            <T variant="medium" numberOfLines={2}>{j.title}</T>
-            <T variant="small" tone="textSecondary">{`Fires at $${j.trigger.price} or less · checks every ${j.everyHours}h · written by the agent ${new Date(j.createdAt).toLocaleDateString('en-GB')}`}</T>
-            <T variant="small" tone={j.firedAt ? 'buy' : 'textSecondary'}>{j.firedAt ? `Fired ${new Date(j.firedAt).toLocaleString('en-GB')}` : j.lastRun ? `Last checked ${new Date(j.lastRun).toLocaleString('en-GB')}` : 'Not run yet'}</T>
-          </Card>
-        )) : <Card><T tone="textSecondary">None yet. They appear when the agent decides to wait for a better price.</T></Card>}
-      </Section>
-
-      <Section title="Activity">
-        <Card>{(state?.log ?? []).slice(0, 25).map((l) => (
-          <View key={l.id} style={{ gap: 2 }}>
-            <T variant="small" tone="textSecondary">{new Date(l.at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</T>
-            <T variant="small">{l.text}</T>
-          </View>
-        ))}</Card>
-      </Section>
-    </Screen>
-  );
-}
-
-function Row({ icon, tone, text }: { icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; tone: 'buy' | 'ask'; text: string }) {
-  const t = useTheme();
-  return <View style={{ flexDirection: 'row', gap: Spacing.two }}><MaterialCommunityIcons name={icon} size={18} color={t[tone]} /><T variant="small" style={{ flex: 1 }}>{text}</T></View>;
-}
-
-function VersionCard({ v }: { v: PolicyVersion }) {
-  const passed = v.testResults?.filter((r) => r.pass).length;
-  const failed = v.testResults?.filter((r) => !r.pass) ?? [];
-  return (
-    <Card>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
-        <T variant="display" style={{ flex: 1 }}>{`v${v.version}`}</T>
-        <T variant="small" tone={v.activatedAt ? 'buy' : 'veto'}>{v.activatedAt ? (v.createdBy === 'seed' ? 'Starting rules' : 'Live') : 'Rejected by its own tests'}</T>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: t.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={[styles.head, { paddingTop: insets.top + Spacing.two, borderColor: t.line }]}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.title, { color: t.text }]}>Your agent</Text>
+          <T variant="small" tone="textSecondary">{`Knows ${state?.items.length ?? 0} things you own · ${state?.memories.length ?? 0} memories · rules v${state?.policy.version ?? 1}`}</T>
+        </View>
+        <Pressable onPress={() => router.push('/rules')} accessibilityRole="button" accessibilityLabel="Rules and memory" style={[styles.iconBtn, { borderColor: t.line }]}>
+          <MaterialCommunityIcons name="brain" size={20} color={t.text} />
+        </Pressable>
       </View>
-      <T variant="small">{v.reason}</T>
-      {v.diff?.added.length ? <T variant="mono" tone="textSecondary">{`+ ${v.diff.added.join(', ')}`}</T> : null}
-      {v.testResults ? <T variant="small" tone="textSecondary">{`${passed}/${v.testResults.length} tests passed`}</T> : <T variant="small" tone="textSecondary">{`${v.testCount} tests`}</T>}
-      {failed.map((f) => <T key={f.name} variant="small" tone="veto">{`✗ ${f.name}: expected ${f.expect}, got ${f.got}`}</T>)}
-      {v.errors?.map((e) => <T key={e} variant="small" tone="veto">{`✗ ${e}`}</T>)}
-    </Card>
+
+      <ScrollView ref={scroll} contentContainerStyle={styles.list}>
+        {!messages.length ? (
+          <View style={{ gap: Spacing.three, marginTop: Spacing.four }}>
+            <T variant="display">Talk to it like a friend who knows your closet.</T>
+            <T tone="textSecondary">It checks what you own, your skin and the weather first, remembers what matters, and only buys through your tested rules. Hold the mic to speak.</T>
+            <View style={{ gap: Spacing.two }}>
+              {STARTERS.map((s) => (
+                <Pressable key={s} onPress={() => send(s)} style={[styles.starter, { borderColor: t.line, backgroundColor: t.surface }]} accessibilityRole="button">
+                  <T variant="medium">{s}</T>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : messages.map((m) => <Bubble key={m.id} m={m} />)}
+        {busy ?<T variant="small" tone="textSecondary">{`${busy}…`}</T> : null}
+        {error ? <Banner tone="veto" icon="alert-circle-outline" text={error} /> : null}
+        {voiceErr ? <Banner tone="veto" icon="microphone-off" text={voiceErr} /> : null}
+      </ScrollView>
+
+      <View style={[styles.composer, { borderColor: t.line, backgroundColor: t.surface, marginBottom: Platform.OS === 'web' ? 84 : Spacing.two }]}>
+        <TextInput value={text} onChangeText={setText} placeholder={voice.recording ? 'Listening… tap the mic to send' : 'Message your agent'} placeholderTextColor={t.textSecondary}
+          multiline accessibilityLabel="Message your agent" style={[styles.input, { color: t.text }]} onSubmitEditing={() => send()} />
+        {text.trim() ? (
+          <Pressable onPress={() => send()} disabled={!!busy} accessibilityRole="button" accessibilityLabel="Send" style={[styles.round, { backgroundColor: t.accent, opacity: busy ? 0.5 : 1 }]}>
+            <MaterialCommunityIcons name="arrow-up" size={22} color={t.onAccent} />
+          </Pressable>
+        ) : (
+          <Pressable onPress={talk} disabled={!!busy && !voice.recording} accessibilityRole="button" accessibilityLabel={voice.recording ? 'Stop and send voice' : 'Talk to your agent'}
+            style={[styles.round, { backgroundColor: voice.recording ? t.veto : t.text }]}>
+            <MaterialCommunityIcons name={voice.recording ? 'stop' : 'microphone'} size={22} color={t.background} />
+          </Pressable>
+        )}
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
-function RuleRow({ r }: { r: Rule }) {
-  const when = r.when.map((c) => {
-    const fact = FACT_WORDS[c.fact] ?? c.fact;
-    if (c.op === 'is') return c.value ? fact : `not ${fact}`;
-    if (c.op === 'notEmpty') return fact;
-    const value = typeof c.value === 'string' && FACT_WORDS[c.value] ? FACT_WORDS[c.value] : String(c.value ?? '');
-    return `${fact} ${OP_WORDS[c.op] ?? c.op} ${value}`.trim();
-  }).join(' and ');
+function Bubble({ m }: { m: ChatMessage }) {
+  const t = useTheme();
+  const { state } = useStore();
+  const mine = m.role === 'user';
   return (
-    <View style={{ gap: 4, paddingVertical: 4 }}>
-      <Stamp verdict={r.then} />
-      <T variant="small">{`When ${when}.`}</T>
-      <T variant="small" tone="textSecondary">{r.because}</T>
+    <View style={{ alignItems: mine ? 'flex-end' : 'flex-start', gap: 6 }}>
+      {m.actions?.length ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {m.actions.map((a, i) => (
+            <View key={i} style={[styles.action, { borderColor: a.ok ? t.buy : t.veto }]}>
+              <MaterialCommunityIcons name={a.ok ? 'check' : 'close'} size={13} color={a.ok ? t.buy : t.veto} />
+              <T variant="small" style={{ fontSize: 12.5 }}>{a.summary}</T>
+            </View>
+          ))}
+        </View>
+      ) : null}
+      <View style={[styles.bubble, mine ? { backgroundColor: t.text, borderBottomRightRadius: 4 } : { backgroundColor: t.surface, borderColor: t.line, borderWidth: StyleSheet.hairlineWidth, borderBottomLeftRadius: 4 }]}>
+        {m.voice ? <MaterialCommunityIcons name="microphone" size={13} color={mine ? t.background : t.textSecondary} /> : null}
+        <Text style={{ fontFamily: Type.body, fontSize: 16, lineHeight: 22, color: mine ? t.background : t.text }}>{m.text}</Text>
+      </View>
+      {m.attachments?.map((a, i) => {
+        if (a.kind === 'look' && a.photoId) return <Image key={i} source={mediaUrl(a.photoId)} style={styles.look} contentFit="cover" accessibilityLabel="Generated look" />;
+        const d = state?.decisions.find((x) => x.id === a.decisionId);
+        if (!d) return null;
+        return (
+          <Pressable key={i} onPress={() => router.push('/')} style={[styles.decision, { borderColor: t.line, backgroundColor: t.surface }]}>
+            <Stamp verdict={d.verdict} />
+            <T variant="small" numberOfLines={2} style={{ flex: 1 }}>{d.product ? `${d.product.title} · $${d.product.price}` : d.need.need}</T>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  input: { minHeight: 80, borderWidth: 1, borderRadius: Radius.md, padding: 12, fontFamily: Type.body, fontSize: 16, textAlignVertical: 'top' },
+  head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingHorizontal: Spacing.three, paddingBottom: Spacing.two, borderBottomWidth: StyleSheet.hairlineWidth },
+  title: { fontFamily: Type.display, fontSize: 26, lineHeight: 32 },
+  iconBtn: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  list: { padding: Spacing.three, gap: Spacing.three, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', paddingBottom: Spacing.five },
+  starter: { borderWidth: 1, borderRadius: Radius.md, padding: Spacing.three },
+  bubble: { maxWidth: '86%', borderRadius: Radius.lg, paddingHorizontal: 14, paddingVertical: 10, gap: 4 },
+  action: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: 8, paddingVertical: 2 },
+  look: { width: 220, height: 330, borderRadius: Radius.lg },
+  decision: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, borderWidth: 1, borderRadius: Radius.md, padding: Spacing.two, maxWidth: '86%' },
+  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two, marginHorizontal: Spacing.three, borderWidth: 1, borderRadius: 26, padding: 6, paddingLeft: 16, width: 'auto', maxWidth: MaxContentWidth },
+  input: { flex: 1, fontFamily: Type.body, fontSize: 16, maxHeight: 120, paddingVertical: 10 },
+  round: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 });

@@ -10,20 +10,24 @@ export default function AppTabs() {
   return (
     <NativeTabs backgroundColor={t.surface} indicatorColor={t.backgroundSelected} tintColor={t.accent} labelStyle={{ color: t.textSecondary, selected: { color: t.text } }}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Icon sf={{ default: 'sparkles', selected: 'sparkles' }} md={{ default: 'auto_awesome', selected: 'auto_awesome' }} />
+        <NativeTabs.Trigger.Icon sf="sparkles" md="auto_awesome" />
         <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
         {waiting ? <NativeTabs.Trigger.Badge>{String(waiting)}</NativeTabs.Trigger.Badge> : null}
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="shelf">
-        <NativeTabs.Trigger.Icon sf="square.grid.2x2" md="grid_view" />
-        <NativeTabs.Trigger.Label>Shelf</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="closet">
+        <NativeTabs.Trigger.Icon sf="tshirt" md="checkroom" />
+        <NativeTabs.Trigger.Label>Closet</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="checkin">
-        <NativeTabs.Trigger.Icon sf="face.smiling" md="face" />
-        <NativeTabs.Trigger.Label>Check-in</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="skin">
+        <NativeTabs.Trigger.Icon sf="drop" md="water_drop" />
+        <NativeTabs.Trigger.Label>Skin</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="makeup">
+        <NativeTabs.Trigger.Icon sf="paintpalette" md="palette" />
+        <NativeTabs.Trigger.Label>Makeup</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="agent">
-        <NativeTabs.Trigger.Icon sf="checklist" md="rule" />
+        <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right" md="forum" />
         <NativeTabs.Trigger.Label>Agent</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>

@@ -15,9 +15,10 @@ export default function AppTabs() {
       <TabList asChild>
         <View style={StyleSheet.flatten([styles.bar, { backgroundColor: t.surface, borderColor: t.line }])}>
           <TabTrigger name="index" href="/" asChild><TabButton icon="auto-fix">Today</TabButton></TabTrigger>
-          <TabTrigger name="shelf" href="/shelf" asChild><TabButton icon="view-grid-outline">Shelf</TabButton></TabTrigger>
-          <TabTrigger name="checkin" href="/checkin" asChild><TabButton icon="face-woman-outline">Check-in</TabButton></TabTrigger>
-          <TabTrigger name="agent" href="/agent" asChild><TabButton icon="format-list-checks">Agent</TabButton></TabTrigger>
+          <TabTrigger name="closet" href="/closet" asChild><TabButton icon="hanger">Closet</TabButton></TabTrigger>
+          <TabTrigger name="skin" href="/skin" asChild><TabButton icon="water-outline">Skin</TabButton></TabTrigger>
+          <TabTrigger name="makeup" href="/makeup" asChild><TabButton icon="palette-outline">Makeup</TabButton></TabTrigger>
+          <TabTrigger name="agent" href="/agent" asChild><TabButton icon="forum-outline">Agent</TabButton></TabTrigger>
         </View>
       </TabList>
     </Tabs>

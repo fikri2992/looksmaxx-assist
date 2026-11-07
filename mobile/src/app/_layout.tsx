@@ -26,6 +26,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
           <Stack.Screen name="item" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="rules" options={{ presentation: 'modal' }} />
         </Stack>
       </StoreProvider>
     </ThemeProvider>
