@@ -45,3 +45,12 @@ test('diff names added, removed and changed rules', () => {
   assert.deepEqual(d.removed, [SEED_POLICY.rules[1].id]);
   assert.deepEqual(d.changed, [SEED_POLICY.rules[0].id]);
 });
+
+test('"contains" ignores a "free" label, so a rule never vetoes the safe version', async () => {
+  const { containsWord } = await import('../lib/policy.mjs');
+  assert.equal(containsWord('Brightening Vitamin C Serum', 'vitamin c'), true);
+  assert.equal(containsWord('Vitamin C-free Toner', 'vitamin c'), false);
+  assert.equal(containsWord('Fragrance free lotion', 'fragrance'), false);
+  assert.equal(containsWord('Rose fragrance mist', 'fragrance'), true);
+  assert.equal(containsWord('a (weird) name', '(weird)'), true);
+});
