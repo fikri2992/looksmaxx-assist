@@ -85,6 +85,10 @@ console.log('✔ preferences told to the agent');
 
 const p = await call('POST', '/api/plan', { goal: 'Keep my daily skincare stocked for hot, high-UV days, and a natural makeup look for work.' });
 for (const d of p.decisions || []) console.log(`  ${d.verdict.padEnd(4)} ${d.need.need} → ${d.product ? `${d.product.title.slice(0, 44)} $${d.product.price}` : d.note || ''}`);
+// The core moment: asking for something the closet already covers should end in a skip.
+const p2 = await call('POST', '/api/plan', { goal: 'I think I need another plain black top for the office.' });
+for (const d of p2.decisions?.slice(0, 2) || []) console.log(`  ${d.verdict.padEnd(4)} ${d.need.need} → ${d.product ? d.product.title.slice(0, 44) : d.note || ''}`);
+
 // Make sure the demo shows a price watch: if the plan didn't wait on anything, watch the first "ask" at its low.
 const afterPlan = await call('GET', '/api/state');
 if (!afterPlan.watchJobs.length) {

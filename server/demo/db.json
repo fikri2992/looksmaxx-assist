@@ -15,8 +15,8 @@
  },
  "items": [
   {
-   "id": "itm_ac6964f3",
-   "createdAt": "2026-11-07T08:36:26.455Z",
+   "id": "itm_050a6b4b",
+   "createdAt": "2026-11-07T08:58:38.705Z",
    "status": "active",
    "source": "demo data",
    "wears": [],
@@ -26,8 +26,8 @@
    "opened": "2026-09-28"
   },
   {
-   "id": "itm_e8e82b4a",
-   "createdAt": "2026-11-07T08:36:26.460Z",
+   "id": "itm_eb1d8b5c",
+   "createdAt": "2026-11-07T08:58:38.710Z",
    "status": "active",
    "source": "demo data",
    "wears": [],
@@ -37,8 +37,8 @@
    "opened": "2026-09-16"
   },
   {
-   "id": "itm_1057e81f",
-   "createdAt": "2026-11-07T08:36:26.464Z",
+   "id": "itm_8ce3df60",
+   "createdAt": "2026-11-07T08:58:38.714Z",
    "status": "active",
    "source": "demo data",
    "wears": [],
@@ -48,8 +48,8 @@
    "opened": "2026-10-18"
   },
   {
-   "id": "itm_c8d36187",
-   "createdAt": "2026-11-07T08:36:26.469Z",
+   "id": "itm_73187377",
+   "createdAt": "2026-11-07T08:58:38.719Z",
    "status": "active",
    "source": "demo data",
    "wears": [],
@@ -59,8 +59,8 @@
    "opened": "2026-09-27"
   },
   {
-   "id": "itm_5a26e355",
-   "createdAt": "2026-11-07T08:36:26.473Z",
+   "id": "itm_7461bb46",
+   "createdAt": "2026-11-07T08:58:38.723Z",
    "status": "active",
    "source": "demo data",
    "wears": [],
@@ -73,8 +73,8 @@
    "opened": "2026-10-08"
   },
   {
-   "id": "itm_b1062485",
-   "createdAt": "2026-11-07T08:36:26.478Z",
+   "id": "itm_035ba94d",
+   "createdAt": "2026-11-07T08:58:38.727Z",
    "status": "active",
    "source": "demo data",
    "wears": [],
@@ -85,8 +85,8 @@
    "opened": "2026-08-29"
   },
   {
-   "id": "itm_9e84f5ab",
-   "createdAt": "2026-11-07T08:36:26.482Z",
+   "id": "itm_58fc4d3d",
+   "createdAt": "2026-11-07T08:58:38.732Z",
    "status": "active",
    "source": "demo data",
    "wears": [],
@@ -99,8 +99,8 @@
    "opened": "2026-08-09"
   },
   {
-   "id": "itm_b1b2322d",
-   "createdAt": "2026-11-07T08:36:26.501Z",
+   "id": "itm_19701a63",
+   "createdAt": "2026-11-07T08:58:38.744Z",
    "status": "active",
    "source": "demo data",
    "wears": [
@@ -111,11 +111,11 @@
    "category": "wardrobe",
    "type": "top",
    "color": "black",
-   "photoId": "865ab6ac-31c.jpg"
+   "photoId": "32a47bad-168.jpg"
   },
   {
-   "id": "itm_7db067bb",
-   "createdAt": "2026-11-07T08:36:26.507Z",
+   "id": "itm_d9d7acab",
+   "createdAt": "2026-11-07T08:58:38.756Z",
    "status": "active",
    "source": "demo data",
    "wears": [
@@ -127,11 +127,11 @@
    "category": "wardrobe",
    "type": "top",
    "color": "black",
-   "photoId": "2076c341-66d.jpg"
+   "photoId": "8fe266ee-476.jpg"
   },
   {
-   "id": "itm_d99b570e",
-   "createdAt": "2026-11-07T08:36:26.513Z",
+   "id": "itm_eb9cb5dc",
+   "createdAt": "2026-11-07T08:58:38.766Z",
    "status": "active",
    "source": "demo data",
    "wears": [],
@@ -139,11 +139,11 @@
    "category": "wardrobe",
    "type": "top",
    "color": "black",
-   "photoId": "e55f4f02-6a1.jpg"
+   "photoId": "fc8355aa-0ed.jpg"
   },
   {
-   "id": "itm_e16a3047",
-   "createdAt": "2026-11-07T08:36:26.518Z",
+   "id": "itm_5438366d",
+   "createdAt": "2026-11-07T08:58:38.775Z",
    "status": "active",
    "source": "demo data",
    "wears": [
@@ -153,11 +153,11 @@
    "category": "wardrobe",
    "type": "top",
    "color": "black",
-   "photoId": "d01a62d0-3f9.jpg"
+   "photoId": "d261c127-cc9.jpg"
   },
   {
-   "id": "itm_3de39beb",
-   "createdAt": "2026-11-07T08:36:26.524Z",
+   "id": "itm_a774aed0",
+   "createdAt": "2026-11-07T08:58:38.786Z",
    "status": "active",
    "source": "demo data",
    "wears": [
@@ -168,11 +168,11 @@
    "category": "wardrobe",
    "type": "bottom",
    "color": "beige",
-   "photoId": "40a32692-142.jpg"
+   "photoId": "2e220f28-d25.jpg"
   },
   {
-   "id": "itm_8a1bd6d3",
-   "createdAt": "2026-11-07T08:36:26.530Z",
+   "id": "itm_330f2ceb",
+   "createdAt": "2026-11-07T08:58:38.797Z",
    "status": "active",
    "source": "demo data",
    "wears": [],
@@ -180,11 +180,11 @@
    "category": "wardrobe",
    "type": "bottom",
    "color": "olive",
-   "photoId": "09bcbf4b-946.jpg"
+   "photoId": "4ec2fa3e-095.jpg"
   },
   {
-   "id": "itm_28705cee",
-   "createdAt": "2026-11-07T08:36:26.535Z",
+   "id": "itm_e4a3b50f",
+   "createdAt": "2026-11-07T08:58:38.807Z",
    "status": "active",
    "source": "demo data",
    "wears": [
@@ -194,11 +194,11 @@
    "category": "wardrobe",
    "type": "outerwear",
    "color": "black",
-   "photoId": "6d1611c7-9f0.jpg"
+   "photoId": "9fec4b54-5a5.jpg"
   },
   {
-   "id": "itm_60d60021",
-   "createdAt": "2026-11-07T08:36:26.541Z",
+   "id": "itm_23a31bf7",
+   "createdAt": "2026-11-07T08:58:38.817Z",
    "status": "active",
    "source": "demo data",
    "wears": [
@@ -210,12 +210,12 @@
    "category": "wardrobe",
    "type": "shoes",
    "color": "tan",
-   "photoId": "d585c275-2ea.jpg"
+   "photoId": "b5c124cd-32c.jpg"
   }
  ],
  "checkins": [
   {
-   "id": "chk_8c8e9ac0",
+   "id": "chk_3486a5dc",
    "at": "2026-11-04T00:00:00.000Z",
    "live": false,
    "reading": {
@@ -226,80 +226,31 @@
       "trait": "redness",
       "level": "noticeable",
       "where": "small areas on the cheeks and chin",
-      "confidence": 0.96
+      "confidence": 0.94
      },
      {
       "trait": "uneven tone",
       "level": "mild",
       "where": "cheeks and chin",
-      "confidence": 0.84
+      "confidence": 0.79
      },
      {
       "trait": "visible pores",
       "level": "mild",
-      "where": "around the nose and inner cheeks",
-      "confidence": 0.78
+      "where": "nose and inner cheeks",
+      "confidence": 0.72
      },
      {
       "trait": "under-eye darkness",
       "level": "mild",
       "where": "under both eyes",
-      "confidence": 0.83
-     }
-    ],
-    "makeup": {
-     "wearing": false,
-     "steps": []
-    },
-    "cannot_tell": []
-   },
-   "changes": [
-    "redness: none → noticeable"
-   ]
-  },
-  {
-   "id": "chk_a5d94ee0",
-   "at": "2026-10-29T00:00:00.000Z",
-   "live": false,
-   "reading": {
-    "usable": true,
-    "photo_problem": null,
-    "skin": [
-     {
-      "trait": "dryness",
-      "level": "none",
-      "where": null,
-      "confidence": 0.73
+      "confidence": 0.76
      },
      {
       "trait": "shine",
       "level": "mild",
-      "where": "center of the forehead and nose",
-      "confidence": 0.78
-     },
-     {
-      "trait": "redness",
-      "level": "none",
-      "where": null,
-      "confidence": 0.82
-     },
-     {
-      "trait": "uneven tone",
-      "level": "mild",
-      "where": "subtle variation around the under-eyes and cheeks",
-      "confidence": 0.66
-     },
-     {
-      "trait": "visible pores",
-      "level": "mild",
-      "where": "around the nose and inner cheeks",
-      "confidence": 0.79
-     },
-     {
-      "trait": "under-eye darkness",
-      "level": "mild",
-      "where": "beneath both eyes",
-      "confidence": 0.83
+      "where": "forehead and nose",
+      "confidence": 0.68
      }
     ],
     "makeup": {
@@ -307,7 +258,51 @@
      "steps": []
     },
     "cannot_tell": [
-     "How the skin feels or changes in different lighting"
+     "Whether any subtle makeup is present",
+     "How the skin looks in different lighting or feels to the touch"
+    ]
+   },
+   "changes": []
+  },
+  {
+   "id": "chk_da116425",
+   "at": "2026-10-29T00:00:00.000Z",
+   "live": false,
+   "reading": {
+    "usable": true,
+    "photo_problem": null,
+    "skin": [
+     {
+      "trait": "shine",
+      "level": "mild",
+      "where": "forehead and nose",
+      "confidence": 0.78
+     },
+     {
+      "trait": "uneven tone",
+      "level": "mild",
+      "where": "under the eyes and around the cheeks",
+      "confidence": 0.7
+     },
+     {
+      "trait": "visible pores",
+      "level": "mild",
+      "where": "around the nose and inner cheeks",
+      "confidence": 0.74
+     },
+     {
+      "trait": "under-eye darkness",
+      "level": "mild",
+      "where": "under both eyes",
+      "confidence": 0.82
+     }
+    ],
+    "makeup": {
+     "wearing": false,
+     "steps": []
+    },
+    "cannot_tell": [
+     "Whether any subtle complexion products are being worn."
     ]
    },
    "changes": []
@@ -315,11 +310,11 @@
  ],
  "reactions": [
   {
-   "id": "rct_535278af",
-   "at": "2026-11-07T08:36:38.912Z",
+   "id": "rct_678e486a",
+   "at": "2026-11-07T08:58:51.028Z",
    "source": "you said",
    "item": "Vitamin C serum",
-   "note": "Stung cheeks and left them red.",
+   "note": "Stung my cheeks and left them red.",
    "avoid": [
     "vitamin c"
    ]
@@ -327,15 +322,93 @@
  ],
  "decisions": [
   {
-   "id": "dec_b4124a6c",
-   "at": "2026-11-07T08:37:44.883Z",
+   "id": "dec_aa932acd",
+   "at": "2026-11-07T09:00:09.917Z",
    "need": {
-    "need": "Add a natural-finish concealer for work",
+    "need": "A comfortable plain black top for office days",
+    "category": "wardrobe",
+    "type": "top",
+    "query": "plain black knit top for office",
+    "mustBe": "A plain black knit top that works for the office",
+    "why": "Your black knit top may already fill this role, so there may be no need to add another black top.",
+    "coveredBy": "itm_5438366d"
+   },
+   "policyVersion": 2,
+   "weather": {
+    "date": "2026-11-07",
+    "uvMax": 7.9,
+    "feelsMax": 38.7,
+    "rainChance": 98,
+    "humidity": 72
+   },
+   "rejected": [],
+   "alternatives": [],
+   "cost": 0,
+   "verdict": "veto",
+   "reasons": [
+    {
+     "rule": "already-own",
+     "then": "veto",
+     "because": "You already own something that covers this."
+    },
+    {
+     "rule": "fair-and-needed",
+     "then": "buy",
+     "because": "Fair against its own history, and you need it."
+    }
+   ],
+   "product": null,
+   "note": "You own Black knit top."
+  },
+  {
+   "id": "dec_7f151bd1",
+   "at": "2026-11-07T09:00:09.709Z",
+   "need": {
+    "need": "A polished plain black top for the office",
+    "category": "wardrobe",
+    "type": "top",
+    "query": "plain black silk blouse for office",
+    "mustBe": "A plain black blouse suitable for work",
+    "why": "Your black silk blouse already appears to cover this, so check that it fits and suits your office before buying another.",
+    "coveredBy": "itm_eb9cb5dc"
+   },
+   "policyVersion": 2,
+   "weather": {
+    "date": "2026-11-07",
+    "uvMax": 7.9,
+    "feelsMax": 38.7,
+    "rainChance": 98,
+    "humidity": 72
+   },
+   "rejected": [],
+   "alternatives": [],
+   "cost": 0,
+   "verdict": "veto",
+   "reasons": [
+    {
+     "rule": "already-own",
+     "then": "veto",
+     "because": "You already own something that covers this."
+    },
+    {
+     "rule": "fair-and-needed",
+     "then": "buy",
+     "because": "Fair against its own history, and you need it."
+    }
+   ],
+   "product": null,
+   "note": "You own Black silk blouse."
+  },
+  {
+   "id": "dec_ed1c4a5e",
+   "at": "2026-11-07T08:59:47.202Z",
+   "need": {
+    "need": "Natural workday coverage",
     "category": "makeup",
     "type": "concealer",
-    "query": "lightweight natural finish concealer",
-    "mustBe": "A lightweight concealer with a natural finish that can be applied sparingly under the eyes or on small areas of uneven tone.",
-    "why": "It can complement the owned brow pencil, blush, and lipstick for a simple work look while softening the appearance of mild under-eye darkness and uneven tone.",
+    "query": "lightweight natural-finish concealer for under-eye darkness and cheek redness",
+    "mustBe": "A complexion concealer in a shade that matches your skin",
+    "why": "A small amount can even the mild under-eye darkness and redness while keeping your work makeup natural.",
     "coveredBy": null
    },
    "policyVersion": 2,
@@ -348,12 +421,12 @@
    },
    "rejected": [
     {
-     "title": "Shiseido Natural Finish Cream Concealer",
-     "why": "Cream concealer, not identified as lightweight"
+     "title": "Correct & Conceal Under Eye Brightening Concealer",
+     "why": "Brightening under-eye formula may not match skin."
     }
    ],
    "alternatives": [],
-   "cost": 0.008235,
+   "cost": 0.01092,
    "verdict": "ask",
    "reasons": [
     {
@@ -363,16 +436,16 @@
     }
    ],
    "facts": {
-    "product.title": "Fit Me Natural Finish Concealer",
+    "product.title": "Maybelline Fit Me Concealer",
     "product.brand": "Maybelline",
     "product.category": "makeup",
     "product.type": "concealer",
-    "product.price": 5,
+    "product.price": 8.99,
     "product.wasPrice": 0,
     "product.inStock": true,
-    "price.days": 10,
-    "price.low": 5,
-    "price.high": 10.89,
+    "price.days": 12,
+    "price.low": 8.99,
+    "price.high": 10.99,
     "price.vsLow": 1,
     "need.ownedCovering": false,
     "need.daysLeft": 30,
@@ -383,12 +456,12 @@
     "weather.humidity": 72
    },
    "product": {
-    "id": "HQ6eyiC",
-    "title": "Fit Me Natural Finish Concealer",
+    "id": "9InEvOg",
+    "title": "Maybelline Fit Me Concealer",
     "brand": "Maybelline",
-    "image": "https://cdn.trychannel3.com/135c34c5-7e9e-4a00-b39d-b0847ff7bf77?aid=01M6TJG8GJY0ASETFG9PW0DK6W&mid=oeWt",
-    "store": "cvs.com",
-    "price": 5,
+    "image": "https://cdn.trychannel3.com/6fab0fb2-ae6b-4756-bc6f-c19f64d825ff?aid=01M6TKRKYA2JJEXC76Z561GMKV&mid=QnTm",
+    "store": "target.com",
+    "price": 8.99,
     "was": null,
     "currency": "USD"
    },
@@ -397,68 +470,78 @@
     "ourDays": 0,
     "rows": [
      {
+      "at": "2026-10-27",
+      "price": 10.99,
+      "source": "channel3"
+     },
+     {
+      "at": "2026-10-28",
+      "price": 10.99,
+      "source": "channel3"
+     },
+     {
       "at": "2026-10-29",
-      "price": 10.89,
+      "price": 8.99,
       "source": "channel3"
      },
      {
       "at": "2026-10-30",
-      "price": 10.89,
+      "price": 8.99,
       "source": "channel3"
      },
      {
       "at": "2026-10-31",
-      "price": 10.89,
+      "price": 8.99,
       "source": "channel3"
      },
      {
       "at": "2026-11-01",
-      "price": 10.89,
+      "price": 8.99,
       "source": "channel3"
      },
      {
       "at": "2026-11-02",
-      "price": 10.89,
+      "price": 8.99,
       "source": "channel3"
      },
      {
       "at": "2026-11-03",
-      "price": 10.89,
+      "price": 8.99,
       "source": "channel3"
      },
      {
       "at": "2026-11-04",
-      "price": 10.89,
+      "price": 10.99,
       "source": "channel3"
      },
      {
       "at": "2026-11-05",
-      "price": 10.89,
+      "price": 10.99,
       "source": "channel3"
      },
      {
       "at": "2026-11-06",
-      "price": 5,
+      "price": 10.99,
       "source": "channel3"
      },
      {
       "at": "2026-11-07",
-      "price": 5,
+      "price": 10.99,
       "source": "channel3"
      }
     ]
    }
   },
   {
-   "id": "dec_33589368",
-   "at": "2026-11-07T08:37:16.231Z",
+   "id": "dec_75284f45",
+   "at": "2026-11-07T08:59:38.152Z",
    "need": {
-    "need": "Restock daily moisturizer before the current one runs out",
+    "need": "Restock high-UV daily sunscreen",
     "category": "skincare",
-    "type": "moisturizer",
-    "query": "fragrance-free ceramide face moisturizer",
-    "mustBe": "A fragrance-free facial moisturizer containing ceramides.",
-    "why": "The current moisturizer has about eight days left, so a replacement will keep the daily routine stocked.",
+    "type": "sunscreen",
+    "query": "broad-spectrum water-resistant mineral sunscreen SPF 50 for face",
+    "mustBe": "A facial sunscreen labeled broad-spectrum SPF 50 and water-resistant",
+    "why": "Your current sunscreen has about 4 days left, and reliable high-UV protection is important for hot days.",
     "coveredBy": null
    },
    "policyVersion": 2,
@@ -471,12 +554,134 @@
    },
    "rejected": [
     {
-     "title": "Pure Skin Fragrance Free Moisturizer",
-     "why": "No ceramides listed for this moisturizer."
+     "title": "Mineral Sunscreen",
+     "why": "No SPF 50 or broad-spectrum facial label"
+    },
+    {
+     "title": "SPF 50 Mineral Sunscreen Lotion",
+     "why": "Not identified as a facial sunscreen"
     }
    ],
    "alternatives": [],
-   "cost": 0.026671,
+   "cost": 0.0050175,
+   "verdict": "ask",
+   "reasons": [
+    {
+     "rule": "thin-history",
+     "then": "ask",
+     "because": "Less than 14 days of prices, so I can’t judge the price."
+    }
+   ],
+   "facts": {
+    "product.title": "Mineral SPF 50 Sunscreen Face Stick",
+    "product.brand": "Sun Bum",
+    "product.category": "skincare",
+    "product.type": "sunscreen",
+    "product.price": 14.49,
+    "product.wasPrice": 0,
+    "product.inStock": true,
+    "price.days": 10,
+    "price.low": 14.49,
+    "price.high": 15.39,
+    "price.vsLow": 1,
+    "need.ownedCovering": false,
+    "need.daysLeft": 30,
+    "user.avoidHit": "",
+    "budget.monthLeft": 120,
+    "rules.askAbove": 40,
+    "weather.uvMax": 7.9,
+    "weather.humidity": 72
+   },
+   "product": {
+    "id": "mgGNfQP",
+    "title": "Mineral SPF 50 Sunscreen Face Stick",
+    "brand": "Sun Bum",
+    "image": "https://cdn.trychannel3.com/2e8f1aa8-c0ef-44ef-8cab-f980f1922c15?aid=01M6TKRBX3AG5BVJPYJ5T56SF0&mid=gJvb",
+    "store": "golfgalaxy.com",
+    "price": 14.49,
+    "was": null,
+    "currency": "USD"
+   },
+   "history": {
+    "source": "Channel3",
+    "ourDays": 0,
+    "rows": [
+     {
+      "at": "2026-10-29",
+      "price": 15.39,
+      "source": "channel3"
+     },
+     {
+      "at": "2026-10-30",
+      "price": 15.39,
+      "source": "channel3"
+     },
+     {
+      "at": "2026-10-31",
+      "price": 15.39,
+      "source": "channel3"
+     },
+     {
+      "at": "2026-11-01",
+      "price": 15.39,
+      "source": "channel3"
+     },
+     {
+      "at": "2026-11-02",
+      "price": 15.39,
+      "source": "channel3"
+     },
+     {
+      "at": "2026-11-03",
+      "price": 14.49,
+      "source": "channel3"
+     },
+     {
+      "at": "2026-11-04",
+      "price": 14.49,
+      "source": "channel3"
+     },
+     {
+      "at": "2026-11-05",
+      "price": 14.49,
+      "source": "channel3"
+     },
+     {
+      "at": "2026-11-06",
+      "price": 14.49,
+      "source": "channel3"
+     },
+     {
+      "at": "2026-11-07",
+      "price": 14.49,
+      "source": "channel3"
+     }
+    ]
+   }
+  },
+  {
+   "id": "dec_0105ac96",
+   "at": "2026-11-07T08:59:28.853Z",
+   "need": {
+    "need": "Restock daily moisturizer",
+    "category": "skincare",
+    "type": "moisturizer",
+    "query": "fragrance-free ceramide face moisturizer for sensitive skin",
+    "mustBe": "A leave-on facial moisturizer",
+    "why": "Your current moisturizer has about 8 days left, and a simple fragrance-free option is a sensible fit given your cheek redness and past stinging reaction.",
+    "coveredBy": null
+   },
+   "policyVersion": 2,
+   "weather": {
+    "date": "2026-11-07",
+    "uvMax": 7.9,
+    "feelsMax": 38.7,
+    "rainChance": 98,
+    "humidity": 72
+   },
+   "rejected": [],
+   "alternatives": [],
+   "cost": 0.002442,
    "verdict": "buy",
    "reasons": [
     {
@@ -509,7 +714,7 @@
     "id": "tWpsqzM",
     "title": "Toleriane Double Repair Face Moisturizer",
     "brand": "La Roche-Posay",
-    "image": "https://cdn.trychannel3.com/cleaned/v1/5a4714c4-e30f-434c-b577-4c46612d2389?aid=01M6TJFF30CG6JFCBS1QGARC47&mid=Hzn8",
+    "image": "https://cdn.trychannel3.com/cleaned/v1/5a4714c4-e30f-434c-b577-4c46612d2389?aid=01M6TKR48F8RCA86F4MRHN8Z4H&mid=Hzn8",
     "store": "laroche-posay.us",
     "price": 11.49,
     "was": null,
@@ -673,16 +878,16 @@
    }
   },
   {
-   "id": "dec_5d010d70",
-   "at": "2026-11-07T08:37:03.487Z",
+   "id": "dec_dc290e54",
+   "at": "2026-11-07T08:59:28.646Z",
    "need": {
-    "need": "Restock sunscreen before the current tube runs out",
+    "need": "Gentle daily cleansing",
     "category": "skincare",
-    "type": "sunscreen",
-    "query": "mineral broad spectrum SPF 50 water resistant sunscreen",
-    "mustBe": "A broad-spectrum SPF 50 or higher mineral sunscreen labeled water resistant for 80 minutes.",
-    "why": "Hot, high-UV days call for reliable daily sun protection, and the current sunscreen has about four days left.",
-    "coveredBy": null
+    "type": "cleanser",
+    "query": "gentle gel face cleanser",
+    "mustBe": "A gentle rinse-off facial cleanser",
+    "why": "Your cleanser has about 50 days left, so the one you own covers this part of your routine for now.",
+    "coveredBy": "itm_050a6b4b"
    },
    "policyVersion": 2,
    "weather": {
@@ -692,124 +897,37 @@
     "rainChance": 98,
     "humidity": 72
    },
-   "rejected": [
-    {
-     "title": "UV Sport Water Resistant Body Sunscreen SPF 50",
-     "why": "Not a mineral sunscreen."
-    },
-    {
-     "title": "EltaMD UV Sport Broad-Spectrum Sunscreen, SPF 50",
-     "why": "Not a mineral sunscreen."
-    },
-    {
-     "title": "UV Sport Broad-Spectrum SPF 50",
-     "why": "Not a mineral sunscreen."
-    }
-   ],
+   "rejected": [],
    "alternatives": [],
-   "cost": 0.00789,
-   "verdict": "ask",
+   "cost": 0,
+   "verdict": "veto",
    "reasons": [
     {
-     "rule": "thin-history",
-     "then": "ask",
-     "because": "Less than 14 days of prices, so I can’t judge the price."
+     "rule": "already-own",
+     "then": "veto",
+     "because": "You already own something that covers this."
+    },
+    {
+     "rule": "fair-and-needed",
+     "then": "buy",
+     "because": "Fair against its own history, and you need it."
     }
    ],
-   "facts": {
-    "product.title": "Mineral SPF 50 Sunscreen Lotion",
-    "product.brand": "Sun Bum",
-    "product.category": "skincare",
-    "product.type": "sunscreen",
-    "product.price": 17.49,
-    "product.wasPrice": 0,
-    "product.inStock": true,
-    "price.days": 9,
-    "price.low": 20.99,
-    "price.high": 20.99,
-    "price.vsLow": 0.833,
-    "need.ownedCovering": false,
-    "need.daysLeft": 30,
-    "user.avoidHit": "",
-    "budget.monthLeft": 120,
-    "rules.askAbove": 40,
-    "weather.uvMax": 7.9,
-    "weather.humidity": 72
-   },
-   "product": {
-    "id": "lVoE0y8",
-    "title": "Mineral SPF 50 Sunscreen Lotion",
-    "brand": "Sun Bum",
-    "image": "https://cdn.trychannel3.com/53bbd959-24c2-422e-8b9d-9d63ce6dea12?aid=01M6TJF1TJYXZHM6ZDGTYQG1C5&mid=QnTm",
-    "store": "target.com",
-    "price": 17.49,
-    "was": null,
-    "currency": "USD"
-   },
-   "history": {
-    "source": "Channel3",
-    "ourDays": 0,
-    "rows": [
-     {
-      "at": "2026-10-30",
-      "price": 20.99,
-      "source": "channel3"
-     },
-     {
-      "at": "2026-10-31",
-      "price": 20.99,
-      "source": "channel3"
-     },
-     {
-      "at": "2026-11-01",
-      "price": 20.99,
-      "source": "channel3"
-     },
-     {
-      "at": "2026-11-02",
-      "price": 20.99,
-      "source": "channel3"
-     },
-     {
-      "at": "2026-11-03",
-      "price": 20.99,
-      "source": "channel3"
-     },
-     {
-      "at": "2026-11-04",
-      "price": 20.99,
-      "source": "channel3"
-     },
-     {
-      "at": "2026-11-05",
-      "price": 20.99,
-      "source": "channel3"
-     },
-     {
-      "at": "2026-11-06",
-      "price": 20.99,
-      "source": "channel3"
-     },
-     {
-      "at": "2026-11-07",
-      "price": 20.99,
-      "source": "channel3"
-     }
-    ]
-   }
+   "product": null,
+   "note": "You own Gentle gel cleanser."
   }
  ],
  "watchJobs": [
   {
-   "id": "job_4ef25835",
-   "createdAt": "2026-11-07T08:37:55.467Z",
+   "id": "job_86619b87",
+   "createdAt": "2026-11-07T09:00:09.927Z",
    "createdBy": "you",
-   "decisionId": "dec_b4124a6c",
-   "productId": "HQ6eyiC",
-   "title": "Fit Me Natural Finish Concealer",
+   "decisionId": "dec_ed1c4a5e",
+   "productId": "9InEvOg",
+   "title": "Maybelline Fit Me Concealer",
    "trigger": {
     "op": "lte",
-    "price": 4.5
+    "price": 8.09
    },
    "everyHours": 24,
    "lastRun": null,
@@ -818,183 +936,204 @@
  ],
  "log": [
   {
-   "id": "log_1450c783",
-   "at": "2026-11-07T08:37:55.467Z",
+   "id": "log_4d1338d1",
+   "at": "2026-11-07T09:00:09.927Z",
    "kind": "watch",
-   "text": "Watching Fit Me Natural Finish Concealer for $4.5 or less"
+   "text": "Watching Maybelline Fit Me Concealer for $8.09 or less"
   },
   {
-   "id": "log_a99ba89b",
-   "at": "2026-11-07T08:37:55.458Z",
+   "id": "log_f16faa7f",
+   "at": "2026-11-07T09:00:09.917Z",
+   "kind": "veto",
+   "text": "A comfortable plain black top for office days: You already own something that covers this. Fair against its own history, and you need it.",
+   "decisionId": "dec_aa932acd"
+  },
+  {
+   "id": "log_80523c95",
+   "at": "2026-11-07T09:00:09.709Z",
+   "kind": "veto",
+   "text": "A polished plain black top for the office: You already own something that covers this. Fair against its own history, and you need it.",
+   "decisionId": "dec_7f151bd1"
+  },
+  {
+   "id": "log_ad37c134",
+   "at": "2026-11-07T09:00:01.504Z",
    "kind": "ask",
-   "text": "Add a natural-finish concealer for work: Less than 14 days of prices, so I can’t judge the price.",
-   "decisionId": "dec_b4124a6c"
+   "text": "Natural workday coverage: Less than 14 days of prices, so I can’t judge the price.",
+   "decisionId": "dec_ed1c4a5e"
   },
   {
-   "id": "log_285ad171",
-   "at": "2026-11-07T08:37:43.990Z",
+   "id": "log_18f5071a",
+   "at": "2026-11-07T08:59:46.350Z",
+   "kind": "ask",
+   "text": "Restock high-UV daily sunscreen: Less than 14 days of prices, so I can’t judge the price.",
+   "decisionId": "dec_75284f45"
+  },
+  {
+   "id": "log_b285b8a6",
+   "at": "2026-11-07T08:59:37.298Z",
    "kind": "buy",
-   "text": "Restock daily moisturizer before the current one runs out: Fair against its own history, and you need it.",
-   "decisionId": "dec_33589368"
+   "text": "Restock daily moisturizer: Fair against its own history, and you need it.",
+   "decisionId": "dec_0105ac96"
   },
   {
-   "id": "log_a27d97a5",
-   "at": "2026-11-07T08:37:15.311Z",
-   "kind": "ask",
-   "text": "Restock sunscreen before the current tube runs out: Less than 14 days of prices, so I can’t judge the price.",
-   "decisionId": "dec_5d010d70"
+   "id": "log_5e257438",
+   "at": "2026-11-07T08:59:28.646Z",
+   "kind": "veto",
+   "text": "Gentle daily cleansing: You already own something that covers this. Fair against its own history, and you need it.",
+   "decisionId": "dec_dc290e54"
   },
   {
-   "id": "log_4257c341",
-   "at": "2026-11-07T08:36:53.001Z",
+   "id": "log_8ef66d0c",
+   "at": "2026-11-07T08:59:14.718Z",
    "kind": "agent",
    "text": "Remembered: Mostly dresses smart casual for a hot office."
   },
   {
-   "id": "log_51ec275d",
-   "at": "2026-11-07T08:36:53.001Z",
+   "id": "log_41c601cb",
+   "at": "2026-11-07T08:59:14.718Z",
    "kind": "agent",
    "text": "Remembered: Wears size M tops."
   },
   {
-   "id": "log_9b0f22e2",
-   "at": "2026-11-07T08:36:53.001Z",
+   "id": "log_ec756323",
+   "at": "2026-11-07T08:59:14.718Z",
    "kind": "agent",
    "text": "Remembered: Prefers fragrance-free skincare."
   },
   {
-   "id": "log_89338a4c",
-   "at": "2026-11-07T08:36:48.963Z",
+   "id": "log_875bf952",
+   "at": "2026-11-07T08:59:10.446Z",
    "kind": "memory",
-   "text": "Remembered: Vitamin C serum (Stung cheeks and left them red.)."
+   "text": "Remembered: Vitamin C serum (Stung my cheeks and left them red.)."
   },
   {
-   "id": "log_bcb9ba0f",
-   "at": "2026-11-07T08:36:48.963Z",
+   "id": "log_9ccce0f3",
+   "at": "2026-11-07T08:59:10.446Z",
    "kind": "policy",
-   "text": "Rules v2 are live: Veto products whose titles contain vitamin C because the user reported stinging and redness. (11 tests passed)."
+   "text": "Rules v2 are live: Veto products whose titles contain vitamin C because the user reported stinging and redness from a vitamin C serum. (12 tests passed)."
   },
   {
-   "id": "log_a3b47f60",
-   "at": "2026-11-07T08:36:36.593Z",
-   "kind": "photo",
-   "text": "Check-in saved as text; the photo isn't kept. Changed: redness: none → noticeable."
-  },
-  {
-   "id": "log_fb3f365d",
-   "at": "2026-11-07T08:36:32.539Z",
+   "id": "log_9c5fa4e9",
+   "at": "2026-11-07T08:58:48.645Z",
    "kind": "photo",
    "text": "Check-in saved as text; the photo isn't kept."
   },
   {
-   "id": "log_c2beffbd",
-   "at": "2026-11-07T08:36:26.542Z",
+   "id": "log_d3e4414e",
+   "at": "2026-11-07T08:58:43.680Z",
+   "kind": "photo",
+   "text": "Check-in saved as text; the photo isn't kept."
+  },
+  {
+   "id": "log_62afc7f6",
+   "at": "2026-11-07T08:58:38.818Z",
    "kind": "memory",
    "text": "Added Tan leather loafers."
   },
   {
-   "id": "log_587e1676",
-   "at": "2026-11-07T08:36:26.536Z",
+   "id": "log_18170353",
+   "at": "2026-11-07T08:58:38.808Z",
    "kind": "memory",
    "text": "Added Black blazer."
   },
   {
-   "id": "log_d9f56f24",
-   "at": "2026-11-07T08:36:26.531Z",
+   "id": "log_31c4d288",
+   "at": "2026-11-07T08:58:38.798Z",
    "kind": "memory",
    "text": "Added Olive midi skirt."
   },
   {
-   "id": "log_af9f8938",
-   "at": "2026-11-07T08:36:26.525Z",
+   "id": "log_0bb9e2f9",
+   "at": "2026-11-07T08:58:38.788Z",
    "kind": "memory",
    "text": "Added Beige linen trousers."
   },
   {
-   "id": "log_c36bd7a6",
-   "at": "2026-11-07T08:36:26.519Z",
+   "id": "log_5139ee93",
+   "at": "2026-11-07T08:58:38.777Z",
    "kind": "memory",
    "text": "Added Black knit top."
   },
   {
-   "id": "log_2b3cb090",
-   "at": "2026-11-07T08:36:26.514Z",
+   "id": "log_5777cdc8",
+   "at": "2026-11-07T08:58:38.767Z",
    "kind": "memory",
    "text": "Added Black silk blouse."
   },
   {
-   "id": "log_583fa90c",
-   "at": "2026-11-07T08:36:26.508Z",
+   "id": "log_2cb85e24",
+   "at": "2026-11-07T08:58:38.757Z",
    "kind": "memory",
    "text": "Added Black cotton tee."
   },
   {
-   "id": "log_16d0f6a5",
-   "at": "2026-11-07T08:36:26.502Z",
+   "id": "log_6342cdca",
+   "at": "2026-11-07T08:58:38.745Z",
    "kind": "memory",
    "text": "Added Black linen top."
   },
   {
-   "id": "log_18ac59fe",
-   "at": "2026-11-07T08:36:26.482Z",
+   "id": "log_bbe25c96",
+   "at": "2026-11-07T08:58:38.732Z",
    "kind": "memory",
    "text": "Added Rose cream blush."
   },
   {
-   "id": "log_1318350f",
-   "at": "2026-11-07T08:36:26.478Z",
+   "id": "log_17128941",
+   "at": "2026-11-07T08:58:38.727Z",
    "kind": "memory",
    "text": "Added Brown brow pencil."
   },
   {
-   "id": "log_4f88e541",
-   "at": "2026-11-07T08:36:26.473Z",
+   "id": "log_264bd34f",
+   "at": "2026-11-07T08:58:38.723Z",
    "kind": "memory",
    "text": "Added Nude matte lipstick."
   },
   {
-   "id": "log_092f0c43",
-   "at": "2026-11-07T08:36:26.469Z",
+   "id": "log_e9858aba",
+   "at": "2026-11-07T08:58:38.719Z",
    "kind": "memory",
    "text": "Added Mineral sunscreen SPF 50."
   },
   {
-   "id": "log_ff700a23",
-   "at": "2026-11-07T08:36:26.464Z",
+   "id": "log_36d33f45",
+   "at": "2026-11-07T08:58:38.714Z",
    "kind": "memory",
    "text": "Added Retinol night serum."
   },
   {
-   "id": "log_e43c5aa0",
-   "at": "2026-11-07T08:36:26.460Z",
+   "id": "log_2d817fb8",
+   "at": "2026-11-07T08:58:38.710Z",
    "kind": "memory",
    "text": "Added Ceramide barrier moisturizer."
   },
   {
-   "id": "log_10c27384",
-   "at": "2026-11-07T08:36:26.455Z",
+   "id": "log_99121426",
+   "at": "2026-11-07T08:58:38.705Z",
    "kind": "memory",
    "text": "Added Gentle gel cleanser."
   }
  ],
  "memories": [
   {
-   "id": "mem_1215e71f",
-   "at": "2026-11-07T08:36:51.609Z",
+   "id": "mem_4257c7e8",
+   "at": "2026-11-07T08:59:13.245Z",
    "text": "Prefers fragrance-free skincare.",
    "kind": "preference",
    "source": "you said"
   },
   {
-   "id": "mem_3340d713",
-   "at": "2026-11-07T08:36:51.609Z",
+   "id": "mem_755de2bc",
+   "at": "2026-11-07T08:59:13.245Z",
    "text": "Wears size M tops.",
    "kind": "size",
    "source": "you said"
   },
   {
-   "id": "mem_799c1c99",
-   "at": "2026-11-07T08:36:51.609Z",
+   "id": "mem_c9600826",
+   "at": "2026-11-07T08:59:13.245Z",
    "text": "Mostly dresses smart casual for a hot office.",
    "kind": "preference",
    "source": "you said"
@@ -1002,212 +1141,212 @@
  ],
  "diary": [
   {
-   "id": "dia_10179d1a",
+   "id": "dia_1907efe9",
    "date": "2026-11-06",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c"
    ],
    "feel": "Calm",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.588Z"
+   "updatedAt": "2026-11-07T08:58:38.863Z"
   },
   {
-   "id": "dia_983a123a",
+   "id": "dia_20b1f729",
    "date": "2026-11-05",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_1057e81f"
+    "itm_050a6b4b",
+    "itm_8ce3df60"
    ],
    "feel": "Tight",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.584Z"
+   "updatedAt": "2026-11-07T08:58:38.860Z"
   },
   {
-   "id": "dia_8e7e46cb",
+   "id": "dia_7d5980ca",
    "date": "2026-11-04",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c"
    ],
    "feel": "Glowing",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.581Z"
+   "updatedAt": "2026-11-07T08:58:38.856Z"
   },
   {
-   "id": "dia_0982de56",
+   "id": "dia_ffb83d80",
    "date": "2026-11-03",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_1057e81f"
+    "itm_050a6b4b",
+    "itm_8ce3df60"
    ],
    "feel": "Itchy",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.577Z"
+   "updatedAt": "2026-11-07T08:58:38.853Z"
   },
   {
-   "id": "dia_878e1ef6",
+   "id": "dia_4035880f",
    "date": "2026-11-02",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c"
    ],
    "feel": "Calm",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.573Z"
+   "updatedAt": "2026-11-07T08:58:38.849Z"
   },
   {
-   "id": "dia_eebd74bc",
+   "id": "dia_ff7fccd0",
    "date": "2026-11-01",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_1057e81f"
+    "itm_050a6b4b",
+    "itm_8ce3df60"
    ],
    "feel": "Tight",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.570Z"
+   "updatedAt": "2026-11-07T08:58:38.845Z"
   },
   {
-   "id": "dia_6e3db11f",
+   "id": "dia_0735726f",
    "date": "2026-10-31",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c"
    ],
    "feel": "Calm",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.566Z"
+   "updatedAt": "2026-11-07T08:58:38.841Z"
   },
   {
-   "id": "dia_7a14be68",
+   "id": "dia_4623670f",
    "date": "2026-10-30",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_1057e81f"
+    "itm_050a6b4b",
+    "itm_8ce3df60"
    ],
    "feel": "Itchy",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.562Z"
+   "updatedAt": "2026-11-07T08:58:38.838Z"
   },
   {
-   "id": "dia_1ec007ea",
+   "id": "dia_7b0535a3",
    "date": "2026-10-29",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c"
    ],
    "feel": "Glowing",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.558Z"
+   "updatedAt": "2026-11-07T08:58:38.834Z"
   },
   {
-   "id": "dia_26c12238",
+   "id": "dia_a3d74d37",
    "date": "2026-10-28",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_1057e81f"
+    "itm_050a6b4b",
+    "itm_8ce3df60"
    ],
    "feel": "Tight",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.555Z"
+   "updatedAt": "2026-11-07T08:58:38.830Z"
   },
   {
-   "id": "dia_744b3931",
+   "id": "dia_e59a8460",
    "date": "2026-10-27",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c"
    ],
    "feel": "Calm",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.551Z"
+   "updatedAt": "2026-11-07T08:58:38.826Z"
   },
   {
-   "id": "dia_b0f6bed1",
+   "id": "dia_3f017200",
    "date": "2026-10-26",
    "am": [
-    "itm_ac6964f3",
-    "itm_e8e82b4a",
-    "itm_c8d36187"
+    "itm_050a6b4b",
+    "itm_eb1d8b5c",
+    "itm_73187377"
    ],
    "pm": [
-    "itm_ac6964f3",
-    "itm_1057e81f"
+    "itm_050a6b4b",
+    "itm_8ce3df60"
    ],
    "feel": "Itchy",
    "notes": "demo data",
-   "updatedAt": "2026-11-07T08:36:26.548Z"
+   "updatedAt": "2026-11-07T08:58:38.823Z"
   }
  ],
  "looks": [],
  "chat": [
   {
-   "id": "msg_861037f5",
-   "at": "2026-11-07T08:36:53.001Z",
+   "id": "msg_2c81c58a",
+   "at": "2026-11-07T08:59:14.718Z",
    "role": "user",
    "text": "Remember that I prefer fragrance-free skincare, I wear size M tops, and I mostly dress smart casual for a hot office.",
    "voice": false
   },
   {
-   "id": "msg_ad8f2b4c",
-   "at": "2026-11-07T08:36:53.001Z",
+   "id": "msg_b45ddebe",
+   "at": "2026-11-07T08:59:14.718Z",
    "role": "assistant",
-   "text": "Got it—I’ll keep your fragrance-free skincare preference, size M tops, and smart-casual hot-office style in mind.",
+   "text": "Got it—I’ll remember your fragrance-free skincare preference, size M tops, and smart-casual style for a hot office.",
    "actions": [
     {
      "tool": "remember",
@@ -1563,13 +1702,13 @@
      "expect": "ask"
     }
    ],
-   "activatedAt": "2026-11-07T08:36:26.443Z",
+   "activatedAt": "2026-11-07T08:58:38.689Z",
    "testResults": null
   },
   {
    "version": 2,
    "createdBy": "agent",
-   "reason": "Veto products whose titles contain vitamin C because the user reported stinging and redness.",
+   "reason": "Veto products whose titles contain vitamin C because the user reported stinging and redness from a vitamin C serum.",
    "rules": [
     {
      "id": "avoid-list",
@@ -1726,7 +1865,7 @@
      "because": "You run out within a week."
     },
     {
-     "id": "vitamin-c-reaction",
+     "id": "veto-vitamin-c-reaction",
      "when": [
       {
        "fact": "product.title",
@@ -1735,7 +1874,7 @@
       }
      ],
      "then": "veto",
-     "because": "Vitamin C serum stung the user's cheeks and left them red."
+     "because": "The user reported stinging and redness after using a vitamin C serum."
     }
    ],
    "tests": [
@@ -1912,7 +2051,7 @@
      "expect": "ask"
     },
     {
-     "name": "veto vitamin C serum after reported reaction",
+     "name": "Veto the reported vitamin C serum",
      "facts": {
       "product.title": "Vitamin C serum",
       "product.inStock": true,
@@ -1920,9 +2059,25 @@
       "price.vsLow": 0,
       "need.ownedCovering": false,
       "need.daysLeft": 30,
-      "user.avoidHit": "vitamin c",
+      "user.avoidHit": "",
       "budget.monthLeft": 100,
-      "rules.askAbove": 50,
+      "rules.askAbove": 100,
+      "product.price": 20
+     },
+     "expect": "veto"
+    },
+    {
+     "name": "Veto another product whose title contains vitamin C",
+     "facts": {
+      "product.title": "Vitamin C brightening serum",
+      "product.inStock": true,
+      "price.days": 30,
+      "price.vsLow": 0,
+      "need.ownedCovering": false,
+      "need.daysLeft": 30,
+      "user.avoidHit": "",
+      "budget.monthLeft": 100,
+      "rules.askAbove": 100,
       "product.price": 20
      },
      "expect": "veto"
@@ -1930,7 +2085,7 @@
    ],
    "diff": {
     "added": [
-     "vitamin-c-reaction"
+     "veto-vitamin-c-reaction"
     ],
     "removed": [],
     "changed": []
@@ -1997,15 +2152,21 @@
      "pass": true
     },
     {
-     "name": "veto vitamin C serum after reported reaction",
+     "name": "Veto the reported vitamin C serum",
+     "expect": "veto",
+     "got": "veto",
+     "pass": true
+    },
+    {
+     "name": "Veto another product whose title contains vitamin C",
      "expect": "veto",
      "got": "veto",
      "pass": true
     }
    ],
    "errors": [],
-   "proposedAt": "2026-11-07T08:36:48.963Z",
-   "activatedAt": "2026-11-07T08:36:48.963Z"
+   "proposedAt": "2026-11-07T08:59:10.446Z",
+   "activatedAt": "2026-11-07T08:59:10.446Z"
   }
  ],
  "shelfDrafts": [],
@@ -2019,10 +2180,9 @@
    "humidity": 72
   },
   "itemIds": [
-   "itm_b1b2322d",
-   "itm_8a1bd6d3",
-   "itm_60d60021"
+   "itm_19701a63",
+   "itm_330f2ceb"
   ],
-  "reason": "The linen top suits the hot weather, and the unworn skirt gives a less-worn option for a rainy day."
+  "reason": "The linen top suits the hot, humid weather, and the olive skirt has never been worn."
  }
 }
