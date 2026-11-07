@@ -114,7 +114,12 @@ export async function createLiveSession(sdp, instructions) {
     });
     const j = await res.json();
     return { id: j.session?.id, sdp: j.transport?.sdp, minutes: LIVE.minutes };
-  } catch (e) { liveUntil = 0; throw e; }
+  } catch (e) {
+    // No call started: give the estimate back, but hold the window briefly so a failing client can't loop.
+    await charge(-estimate, 'live refund');
+    liveUntil = Date.now() + 30_000;
+    throw e;
+  }
 }
 
 export async function transcribe(bytes, type = 'audio/m4a', seconds = 30) {

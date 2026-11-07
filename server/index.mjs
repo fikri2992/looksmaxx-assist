@@ -230,8 +230,11 @@ const routes = {
 const appDir = path.join(repoRoot, 'mobile', 'dist');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.map': 'application/json' };
 async function serveApp(res, pathname) {
-  const file = path.normalize(path.join(appDir, decodeURIComponent(pathname)));
-  if (!file.startsWith(appDir)) return send(res, 403, { error: 'forbidden' });
+  let decoded;
+  try { decoded = decodeURIComponent(pathname); } catch { return send(res, 400, { error: 'bad path' }); }
+  const file = path.normalize(path.join(appDir, decoded));
+  // Separator-bounded, so a sibling folder like mobile/dist-evil can't pass as inside mobile/dist.
+  if (file !== appDir && !file.startsWith(appDir + path.sep)) return send(res, 403, { error: 'forbidden' });
   const body = await readFile(file).catch(() => null);
   if (body && path.extname(file)) return send(res, 200, body, TYPES[path.extname(file)] || 'application/octet-stream');
   // Client-side routes fall back to the app shell.
