@@ -7,7 +7,7 @@ import { loadEnv, repoRoot } from './lib/env.mjs';
 await loadEnv();
 const { load, save, id, now, log, activePolicy, reset } = await import('./lib/store.mjs');
 const engine = await import('./lib/engine.mjs');
-const { createMandateOrder, authorizeApproved, captureAuthorization, voidAuthorization, refundCapture } = await import('./lib/paypal.mjs');
+const { createMandateOrder, authorizeApproved, captureAuthorization, voidAuthorization, refundCapture, createMandate, finishMandate, revokeMandate } = await import('./lib/paypal.mjs');
 const { movers, historyFor, summarize, observatory } = await import('./lib/prices.mjs');
 const { weatherToday } = await import('./lib/weather.mjs');
 const { modelSpend } = await import('./lib/models.mjs');
@@ -28,7 +28,7 @@ const send = (res, status, body, type = 'application/json') => {
 const bodyOf = async (req) => { let t = ''; for await (const c of req) t += c; return t ? JSON.parse(t) : {}; };
 const withRunOut = (i) => ({ ...i, ...engine.runOut(i) });
 const view = () => ({
-  settings: { ...db.settings, vaultId: undefined, hasPaypal: !!db.settings.vaultId, storeAccount: !!process.env.STORE_SANDBOX_EMAIL },
+  settings: { ...db.settings, vaultId: undefined, pendingMandate: undefined, pendingOrder: undefined, hasPaypal: !!db.settings.vaultId, storeAccount: !!process.env.STORE_SANDBOX_EMAIL },
   items: db.items.map(withRunOut), checkins: db.checkins.slice(0, 60), reactions: db.reactions, decisions: db.decisions.slice(0, 100),
   policy: activePolicy(), policyVersions: db.policies.map(({ rules, tests, ...p }) => ({ ...p, ruleCount: rules.length, testCount: tests.length })),
   watchJobs: db.watchJobs, log: db.log.slice(0, 80), shelfDrafts: db.shelfDrafts, modelSpend: modelSpend(),
@@ -157,12 +157,27 @@ const routes = {
     if (!d || !d.product) throw new Error('no such decision');
     if (d.verdict !== 'buy' && !body.override) throw new Error(`The policy said ${d.verdict}; approve it first.`);
     if (!db.settings.vaultId) {
-      const { orderId, approveUrl } = await createMandateOrder({ description: d.product.title, amount: d.product.price, customId: d.id, payeeEmail: process.env.STORE_SANDBOX_EMAIL }, baseUrl);
+      const { orderId, approveUrl } = await createMandateOrder({ description: d.product.title, amount: d.product.price, customId: d.id, payeeEmail: process.env.STORE_SANDBOX_EMAIL || undefined }, baseUrl);
       db.settings.pendingOrder = { orderId, decisionId: d.id };
       log('approve', 'Needs your one approval in PayPal. After that, the agent can buy within your rules.');
       return { approveUrl };
     }
     await engine.execute(d, db);
+  }),
+  // ----- The PayPal mandate: approve once with the rules as the description; revoke any time -----
+  'POST /api/paypal/mandate': (req, res) => exclusive(res, 'Opening PayPal', async () => {
+    const r = db.settings.rules;
+    const { setupTokenId, approveUrl } = await createMandate(`Shelfie agent may buy for you: under $${r.askAbove} an item, $${r.monthlyBudget} a month, after a final price check.`, baseUrl)
+      .catch((e) => { throw e.issue === 'NOT_AUTHORIZED' ? new Error("PayPal says this app can't save payment methods yet: turn on Vault (Save payment methods) in the app's settings on developer.paypal.com. Until then, approving the first purchase links PayPal instead.") : e; });
+    db.settings.pendingMandate = { setupTokenId, at: now() };
+    log('approve', 'Waiting for your approval in PayPal. No purchase is made by approving.');
+    return { approveUrl };
+  }),
+  'POST /api/paypal/revoke': (req, res) => exclusive(res, 'Revoking', async () => {
+    if (db.settings.vaultId) await revokeMandate(db.settings.vaultId).catch((e) => log('error', `PayPal revoke: ${e.message}`));
+    db.settings.vaultId = null;
+    db.settings.mandate = null;
+    log('mandate', 'Revoked: the agent can no longer pay with your PayPal. Approve again to restore it.');
   }),
   'POST /api/refund': (req, res, body) => exclusive(res, 'Refunding', async () => {
     const d = db.decisions.find((x) => x.id === body.id);
@@ -220,16 +235,30 @@ createServer(async (req, res) => {
       const a = await authorizeApproved(pending.orderId);
       const d = db.decisions.find((x) => x.id === pending.decisionId);
       const cap = await captureAuthorization(a.authId);
-      d.paypal = { orderId: a.orderId, authId: a.authId, captureId: cap.captureId, amount: d.product.price, status: 'captured', capturedAt: now(), payee: process.env.STORE_SANDBOX_EMAIL, firstApproval: true };
+      d.paypal = { orderId: a.orderId, authId: a.authId, captureId: cap.captureId, amount: d.product.price, status: 'captured', capturedAt: now(), payee: engine.payeeLabel(), firstApproval: true };
       db.settings.vaultId = a.vaultId;
       db.settings.pendingOrder = null;
       log('mandate', a.vaultId ? `PayPal linked. The agent can buy alone within $${db.settings.rules.askAbove} an item and $${db.settings.rules.monthlyBudget} a month.` : 'Paid, but PayPal returned no saved method.');
     } catch (e) { console.error(e); log('error', e.message); }
     await save();
-    res.writeHead(302, { location: process.env.APP_RETURN_URL || '/ledger' });
+    res.writeHead(302, { location: process.env.APP_RETURN_URL || '/' });
     return res.end();
   }
-  if (url.pathname === '/paypal/cancel') { db.settings.pendingOrder = null; log('approve', 'PayPal approval cancelled. Nothing was charged.'); await save(); res.writeHead(302, { location: '/ledger' }); return res.end(); }
+  if (url.pathname === '/paypal/mandate-return') {
+    try {
+      const token = url.searchParams.get('approval_token_id') || url.searchParams.get('token');
+      if (!db.settings.pendingMandate || db.settings.pendingMandate.setupTokenId !== token) throw new Error('Unknown PayPal approval');
+      const { vaultId } = await finishMandate(token);
+      db.settings.vaultId = vaultId;
+      db.settings.mandate = { at: now(), rules: { ...db.settings.rules } };
+      db.settings.pendingMandate = null;
+      log('mandate', `PayPal mandate approved. The agent can buy alone under $${db.settings.rules.askAbove} an item and $${db.settings.rules.monthlyBudget} a month.`);
+    } catch (e) { console.error(e); log('error', e.message); }
+    await save();
+    res.writeHead(302, { location: process.env.APP_RETURN_URL || '/agent' });
+    return res.end();
+  }
+  if (url.pathname === '/paypal/cancel') { db.settings.pendingOrder = null; log('approve', 'PayPal approval cancelled. Nothing was charged.'); await save(); res.writeHead(302, { location: process.env.APP_RETURN_URL || '/' }); return res.end(); }
   const handler = routes[`${req.method} ${url.pathname}`];
   if (!handler && req.method === 'GET' && !url.pathname.startsWith('/api/')) return serveApp(res, url.pathname);
   if (!handler) return send(res, 404, { error: 'not found' });

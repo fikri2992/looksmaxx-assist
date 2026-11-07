@@ -51,6 +51,10 @@ export default function Rules() {
           <Row icon={state?.settings.hasPaypal ? 'check-circle' : 'circle-outline'} tone={state?.settings.hasPaypal ? 'buy' : 'ask'} text={state?.settings.hasPaypal ? 'PayPal linked. The agent can buy within your rules.' : 'Not linked yet. The first purchase asks you to approve once in PayPal.'} />
           <Row icon="cash-lock" tone="ask" text={`Buys alone under $${state?.settings.rules.askAbove ?? 40} an item and $${state?.settings.rules.monthlyBudget ?? 120} a month. Anything else, it asks.`} />
           <Row icon="store-check-outline" tone="ask" text="It authorizes at purchase time, re-checks the live price, then pays the store or releases the hold. Shelfie never holds your money." />
+          {state?.settings.hasPaypal
+            ? <Button kind="quiet" icon="link-variant-off" label="Revoke the agent’s PayPal access" onPress={() => act('Revoking', '/api/paypal/revoke')} />
+            : <Button icon="shield-check-outline" label="Give your agent a PayPal mandate" onPress={() => act('Opening PayPal', '/api/paypal/mandate')} />}
+          {!state?.settings.hasPaypal ? <T variant="small" tone="textSecondary">PayPal shows these limits when you approve. Approving buys nothing.</T> : null}
         </Card>
       </Section>
 
