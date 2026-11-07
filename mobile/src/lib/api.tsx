@@ -13,7 +13,13 @@ export type Item = {
   id: string; name: string; brand?: string | null; category: Category; type: string; color?: string | null;
   opened?: string | null; status: 'active' | 'low' | 'finished'; source: string; createdAt: string;
   daysLeft: number | null; life: number | null; basis: string;
+  photoId?: string | null; wears?: string[]; shade?: string | null; finish?: string | null; season?: string | null; occasion?: string | null;
 };
+export type Memory = { id: string; at: string; text: string; kind: string; source: string };
+export type DiaryEntry = { id: string; date: string; am?: string[]; pm?: string[]; feel?: string | null; notes?: string };
+export type Look = { id: string; at: string; itemIds: string[]; photoId: string; note: string; fromPhotos: number };
+export type ChatMessage = { id: string; at: string; role: 'user' | 'assistant'; text: string; voice?: boolean; actions?: { tool: string; summary: string; ok: boolean }[]; attachments?: { kind: 'look' | 'decision'; lookId?: string; photoId?: string; decisionId?: string }[] };
+export const mediaUrl = (id?: string | null) => (id ? `${API_URL}/photos/${id}` : null);
 export type SkinTrait = { trait: string; level: 'none' | 'mild' | 'noticeable'; where?: string | null; confidence?: number };
 export type CheckIn = {
   id: string; at: string; live: boolean; changes: string[];
@@ -40,6 +46,8 @@ export type State = {
   items: Item[]; checkins: CheckIn[]; reactions: { id: string; item: string; note: string; avoid: string[]; source: string }[];
   decisions: Decision[]; policy: { version: number; rules: Rule[] }; policyVersions: PolicyVersion[];
   watchJobs: WatchJob[]; log: LogEntry[]; shelfDrafts: Draft[]; modelSpend: number; error?: string; approveUrl?: string;
+  memories: Memory[]; diary: DiaryEntry[]; looks: Look[]; chat: ChatMessage[];
+  heard?: string; reply?: string; audioUrl?: string;
 };
 export type Weather = { date: string; uvMax: number; feelsMax: number; rainChance: number; humidity: number }[];
 
