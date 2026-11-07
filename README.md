@@ -75,6 +75,7 @@ A fresh clone starts from `server/demo`: the seeded persona, its photos, and a c
 - Product photos sent for search are crops, never faces.
 - Channel3 mostly covers US stores in USD.
 - In production, paying stores directly would use PayPal's marketplace onboarding rather than an app-held payee.
+- Live voice calls cannot be hung up from the server, so the server allows one call at a time and `LIVE_ENABLED=0` turns them off (the default in `render.yaml`). On a free host the daily model-spend ledger resets when the instance restarts.
 
 ## Built with
 

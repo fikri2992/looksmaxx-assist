@@ -1,7 +1,7 @@
 // The conversational agent (GPT-6 Luna with tools). It reads everything the app knows about you, acts through
 // the same functions the screens use, and remembers what matters. Money decisions still go through the tested policy.
 import { chat } from './openai.mjs';
-import { decide, proposeRule, runOut } from './engine.mjs';
+import { alreadyBought, decide, proposeRule, runOut } from './engine.mjs';
 import { makeImage } from './openai.mjs';
 import { readPhoto, savePhoto } from './photos.mjs';
 import { weatherToday } from './weather.mjs';
@@ -72,8 +72,11 @@ export const watchTarget = (d) => { const low = d.facts?.['price.low']; return l
 export function watchPrice(db, decisionId, target, createdBy = 'agent') {
   const d = db.decisions.find((x) => x.id === decisionId);
   if (!d?.product) return { ok: false, error: 'no product on that decision' };
+  // A watch can buy on its own later, so it may only replace a purchase that didn't happen, at a lower price.
+  if (!['wait', 'ask'].includes(d.verdict)) return { ok: false, error: `only a wait or ask can become a watch (this one is ${d.verdict})` };
+  if (d.paypal || alreadyBought(db, d.product.id)) return { ok: false, error: 'this product was already bought' };
   const price = Number(target ?? watchTarget(d));
-  if (!(price > 0)) return { ok: false, error: 'no target price' };
+  if (!(price > 0) || price >= d.product.price) return { ok: false, error: `the target must be under today's $${d.product.price}` };
   if (db.watchJobs.some((j) => j.productId === d.product.id && !j.firedAt)) return { ok: true, summary: `Already watching ${d.product.title}` };
   db.watchJobs.push({ id: id('job'), createdAt: now(), createdBy, decisionId: d.id, productId: d.product.id, title: d.product.title, trigger: { op: 'lte', price }, everyHours: 24, lastRun: null, firedAt: null });
   return { ok: true, summary: `Watching ${d.product.title} for $${price} or less` };

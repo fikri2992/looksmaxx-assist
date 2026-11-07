@@ -32,6 +32,15 @@ test('watch defaults to the 30-day low and does not duplicate', async () => {
   assert.equal(watchPrice(db, 'nope').ok, false);
 });
 
+test('a watch can only replace a purchase that did not happen, at a lower price', async () => {
+  const db = await fixture();
+  assert.equal(watchPrice(db, 'd_cap').ok, false, 'not a decision that was bought');
+  db.decisions.push({ id: 'd_buy', verdict: 'buy', product: { id: 'p9', title: 'Mist', price: 10 }, facts: {} });
+  assert.equal(watchPrice(db, 'd_buy', 999).ok, false, 'not a buy verdict, so the model cannot schedule a purchase');
+  assert.equal(watchPrice(db, 'd_wait', 11).ok, false, "not at or above today's price");
+  assert.equal(db.watchJobs.length, 0);
+});
+
 test('a product already at its low is watched for 10% under today', async () => {
   const db = await fixture();
   db.decisions.push({ id: 'd_low', verdict: 'ask', product: { id: 'p4', title: 'Powder', price: 20 }, facts: { 'price.low': 20 } });

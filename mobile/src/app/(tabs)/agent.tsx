@@ -53,7 +53,7 @@ export default function AgentChat() {
           <T variant="small" tone="textSecondary">{`Knows ${plural(state?.items.length ?? 0, 'thing')} you own · ${plural(state?.memories.length ?? 0, 'memory', 'memories')} · rules v${state?.policy.version ?? 1}`}</T>
         </View>
         {/* GPT-Live call runs on a web page (browser WebRTC); on the phone it opens in the browser and needs an https server. */}
-        <Pressable onPress={() => (Platform.OS === 'web' ? window.location.assign('/live') : Linking.openURL(`${API_URL}/live`))} accessibilityRole="button" accessibilityLabel="Live voice call" style={[styles.iconBtn, { borderColor: t.line }]}>
+        <Pressable onPress={() => (Platform.OS === 'web' ? window.location.assign(`${API_URL}/live`) : Linking.openURL(`${API_URL}/live`))} accessibilityRole="button" accessibilityLabel="Live voice call" style={[styles.iconBtn, { borderColor: t.line }]}>
           <MaterialCommunityIcons name="phone-in-talk-outline" size={20} color={t.text} />
         </Pressable>
         <Pressable onPress={() => router.push('/rules')} accessibilityRole="button" accessibilityLabel="Rules and memory" style={[styles.iconBtn, { borderColor: t.line }]}>

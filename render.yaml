@@ -18,6 +18,9 @@ services:
       # Lower model budget for a public URL; the server refuses calls past it.
       - key: OPENAI_DAILY_CAP
         value: "2"
+      # Live voice calls can't be hung up from the server, so they're off on a public URL unless you turn them on.
+      - key: LIVE_ENABLED
+        value: "0"
       - key: PUBLIC_URL
         sync: false
       - key: OPENAI_API_KEY
